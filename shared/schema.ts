@@ -32,9 +32,16 @@ export const timeEntries = pgTable("time_entries", {
   serviceId: integer("service_id").notNull().references(() => services.id),
   startTime: text("start_time").notNull(), // HH:MM format
   endTime: text("end_time").notNull(), // HH:MM format
+  breakStartTime: text("break_start_time"), // HH:MM format
+  breakEndTime: text("break_end_time"), // HH:MM format
   description: text("description").default(""),
   totalHours: decimal("total_hours", { precision: 5, scale: 2 }).notNull(),
   totalValue: decimal("total_value", { precision: 10, scale: 2 }).notNull(),
+  activityCompleted: text("activity_completed"), // "sim" or "nao"
+  deliveryForecast: text("delivery_forecast"), // YYYY-MM-DD format
+  actualDelivery: text("actual_delivery"), // YYYY-MM-DD format
+  project: text("project"),
+  serviceLocation: text("service_location"), // "presencial" or "remoto"
 });
 
 // Insert schemas

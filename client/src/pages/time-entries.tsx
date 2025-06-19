@@ -48,7 +48,14 @@ export default function TimeEntries() {
       serviceId: 0,
       startTime: "",
       endTime: "",
+      breakStartTime: "",
+      breakEndTime: "",
       description: "",
+      activityCompleted: "",
+      deliveryForecast: "",
+      actualDelivery: "",
+      project: "",
+      serviceLocation: "",
     },
   });
 
@@ -87,6 +94,8 @@ export default function TimeEntries() {
   const watchedClientId = form.watch("clientId");
   const watchedStartTime = form.watch("startTime");
   const watchedEndTime = form.watch("endTime");
+  const watchedBreakStartTime = form.watch("breakStartTime");
+  const watchedBreakEndTime = form.watch("breakEndTime");
   const watchedServiceId = form.watch("serviceId");
 
   // Load services when client changes
@@ -130,8 +139,25 @@ export default function TimeEntries() {
         const endMinutes = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
         
         if (endMinutes > startMinutes) {
-          const totalMinutes = endMinutes - startMinutes;
-          const hours = totalMinutes / 60;
+          let totalMinutes = endMinutes - startMinutes;
+          
+          // Calculate break time if provided
+          if (watchedBreakStartTime && watchedBreakEndTime) {
+            const breakStartParts = watchedBreakStartTime.split(':');
+            const breakEndParts = watchedBreakEndTime.split(':');
+            
+            if (breakStartParts.length === 2 && breakEndParts.length === 2) {
+              const breakStartMinutes = parseInt(breakStartParts[0]) * 60 + parseInt(breakStartParts[1]);
+              const breakEndMinutes = parseInt(breakEndParts[0]) * 60 + parseInt(breakEndParts[1]);
+              
+              if (breakEndMinutes > breakStartMinutes) {
+                const breakDuration = breakEndMinutes - breakStartMinutes;
+                totalMinutes = totalMinutes - breakDuration;
+              }
+            }
+          }
+          
+          const hours = Math.max(0, totalMinutes / 60);
           const value = hours * parseFloat(selectedService.hourlyRate);
           
           setCalculatedHours(hours);
@@ -145,7 +171,7 @@ export default function TimeEntries() {
       setCalculatedHours(0);
       setCalculatedValue(0);
     }
-  }, [watchedStartTime, watchedEndTime, selectedService]);
+  }, [watchedStartTime, watchedEndTime, watchedBreakStartTime, watchedBreakEndTime, selectedService]);
 
   const onSubmit = (data: InsertTimeEntry) => {
     createMutation.mutate(data);
@@ -325,6 +351,34 @@ export default function TimeEntries() {
                     )}
                   />
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="breakStartTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Intervalo Início (opcional)</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="time" value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="breakEndTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Intervalo Fim (opcional)</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="time" value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <FormField
                   control={form.control}
                   name="description"
@@ -336,12 +390,99 @@ export default function TimeEntries() {
                           {...field} 
                           rows={3} 
                           placeholder="Descreva as atividades realizadas..."
+                          value={field.value || ""}
+                          onChange={field.onChange}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="project"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Projeto (opcional)</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Nome do projeto" value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="serviceLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Local Atendimento</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o local" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="presencial">Presencial</SelectItem>
+                            <SelectItem value="remoto">Remoto</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="activityCompleted"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Atividade Concluída (opcional)</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma opção" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="sim">Sim</SelectItem>
+                          <SelectItem value="nao">Não</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="deliveryForecast"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Previsão de Entrega (opcional)</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="date" value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="actualDelivery"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Entrega Realizada (opcional)</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="date" value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-700">Total de Horas:</span>
@@ -392,8 +533,25 @@ export default function TimeEntries() {
                           {entry.consultant.name} • {new Date(entry.date).toLocaleDateString('pt-BR')}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {entry.startTime} - {entry.endTime} ({parseFloat(entry.totalHours).toFixed(1)}h)
+                          {entry.startTime} - {entry.endTime}
+                          {entry.breakStartTime && entry.breakEndTime && ` (Intervalo: ${entry.breakStartTime} - ${entry.breakEndTime})`}
+                          {` (${parseFloat(entry.totalHours).toFixed(1)}h)`}
                         </p>
+                        {entry.project && (
+                          <p className="text-xs text-blue-600 font-medium">
+                            Projeto: {entry.project}
+                          </p>
+                        )}
+                        {entry.serviceLocation && (
+                          <p className="text-xs text-gray-500">
+                            Local: {entry.serviceLocation === 'presencial' ? 'Presencial' : 'Remoto'}
+                          </p>
+                        )}
+                        {entry.activityCompleted && (
+                          <p className="text-xs text-green-600">
+                            Atividade: {entry.activityCompleted === 'sim' ? 'Concluída' : 'Pendente'}
+                          </p>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-semibold text-green-600">

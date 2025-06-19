@@ -254,15 +254,34 @@ export class MemStorage implements IStorage {
     return allEntries.filter(entry => entry.consultantId === consultantId);
   }
 
-  private calculateHoursAndValue(startTime: string, endTime: string, hourlyRate: string): { hours: number; value: number } {
+  private calculateHoursAndValue(
+    startTime: string, 
+    endTime: string, 
+    hourlyRate: string, 
+    breakStartTime?: string, 
+    breakEndTime?: string
+  ): { hours: number; value: number } {
     const [startHour, startMin] = startTime.split(':').map(Number);
     const [endHour, endMin] = endTime.split(':').map(Number);
     
     const startMinutes = startHour * 60 + startMin;
     const endMinutes = endHour * 60 + endMin;
     
-    const totalMinutes = endMinutes - startMinutes;
-    const hours = totalMinutes / 60;
+    let totalMinutes = endMinutes - startMinutes;
+    
+    // Calculate break time if provided
+    if (breakStartTime && breakEndTime) {
+      const [breakStartHour, breakStartMin] = breakStartTime.split(':').map(Number);
+      const [breakEndHour, breakEndMin] = breakEndTime.split(':').map(Number);
+      
+      const breakStartMinutes = breakStartHour * 60 + breakStartMin;
+      const breakEndMinutes = breakEndHour * 60 + breakEndMin;
+      
+      const breakDuration = breakEndMinutes - breakStartMinutes;
+      totalMinutes = totalMinutes - breakDuration;
+    }
+    
+    const hours = Math.max(0, totalMinutes / 60);
     const value = hours * parseFloat(hourlyRate);
     
     return { hours, value };
@@ -275,14 +294,28 @@ export class MemStorage implements IStorage {
     const { hours, value } = this.calculateHoursAndValue(
       insertTimeEntry.startTime, 
       insertTimeEntry.endTime, 
-      service.hourlyRate
+      service.hourlyRate,
+      insertTimeEntry.breakStartTime || undefined,
+      insertTimeEntry.breakEndTime || undefined
     );
     
     const id = this.currentTimeEntryId++;
     const timeEntry: TimeEntry = { 
-      ...insertTimeEntry, 
       id,
-      description: insertTimeEntry.description || "",
+      date: insertTimeEntry.date,
+      consultantId: insertTimeEntry.consultantId,
+      clientId: insertTimeEntry.clientId,
+      serviceId: insertTimeEntry.serviceId,
+      startTime: insertTimeEntry.startTime,
+      endTime: insertTimeEntry.endTime,
+      description: insertTimeEntry.description || null,
+      breakStartTime: insertTimeEntry.breakStartTime || null,
+      breakEndTime: insertTimeEntry.breakEndTime || null,
+      activityCompleted: insertTimeEntry.activityCompleted || null,
+      deliveryForecast: insertTimeEntry.deliveryForecast || null,
+      actualDelivery: insertTimeEntry.actualDelivery || null,
+      project: insertTimeEntry.project || null,
+      serviceLocation: insertTimeEntry.serviceLocation || null,
       totalHours: hours.toString(),
       totalValue: value.toString()
     };
