@@ -73,6 +73,22 @@ export default function TimeEntries() {
     }
   }, [currentConsultant, form, editingEntry]);
 
+  // Check for editing activity from Activities page
+  useEffect(() => {
+    const editingActivityData = localStorage.getItem('editingActivity');
+    if (editingActivityData) {
+      try {
+        const activity = JSON.parse(editingActivityData);
+        handleEdit(activity);
+        // Clear the localStorage after loading
+        localStorage.removeItem('editingActivity');
+      } catch (error) {
+        console.error('Error loading editing activity:', error);
+        localStorage.removeItem('editingActivity');
+      }
+    }
+  }, [consultants, clients]);
+
   const createMutation = useMutation({
     mutationFn: (data: InsertTimeEntry) => apiRequest("POST", "/api/time-entries", data),
     onSuccess: () => {

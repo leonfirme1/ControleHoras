@@ -22,6 +22,7 @@ import {
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Edit, Trash2, Filter, Calendar, User, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 export default function Activities() {
   const [filters, setFilters] = useState({
@@ -32,6 +33,7 @@ export default function Activities() {
   });
 
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   // Fetch filtered activities
   const { data: activities, isLoading: activitiesLoading } = useQuery<TimeEntryDetailed[]>({
@@ -91,6 +93,13 @@ export default function Activities() {
     }),
     { hours: 0, value: 0 }
   ) || { hours: 0, value: 0 };
+
+  const handleEdit = (activity: TimeEntryDetailed) => {
+    // Store the activity data in localStorage for the time-entries page
+    localStorage.setItem('editingActivity', JSON.stringify(activity));
+    // Navigate to time-entries page
+    setLocation('/time-entries');
+  };
 
   const handleDelete = (id: number, description: string) => {
     if (window.confirm(`Tem certeza que deseja excluir a atividade "${description}"?`)) {
@@ -206,6 +215,16 @@ export default function Activities() {
             </div>
             
             <div className="flex gap-2 mt-4">
+              <Button 
+                onClick={() => {
+                  // Force refetch when filter button is clicked
+                  queryClient.invalidateQueries({ queryKey: ["/api/time-entries/filtered"] });
+                }}
+                className="bg-primary text-white hover:bg-primary/90"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filtrar
+              </Button>
               <Button variant="outline" onClick={clearFilters}>
                 Limpar Filtros
               </Button>
@@ -312,6 +331,7 @@ export default function Activities() {
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0"
+                              onClick={() => handleEdit(activity)}
                               title="Editar"
                             >
                               <Edit className="h-4 w-4" />
