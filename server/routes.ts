@@ -259,6 +259,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/time-entries/filtered", async (req, res) => {
+    try {
+      const { startDate, endDate, clientId, consultantId } = req.query;
+      
+      let timeEntries: any[];
+      
+      if (startDate && endDate) {
+        timeEntries = await storage.getTimeEntriesByDateRange(startDate as string, endDate as string);
+      } else {
+        timeEntries = await storage.getTimeEntries();
+      }
+      
+      // Apply additional filters
+      if (clientId) {
+        timeEntries = timeEntries.filter(entry => entry.clientId === parseInt(clientId as string));
+      }
+      
+      if (consultantId) {
+        timeEntries = timeEntries.filter(entry => entry.consultantId === parseInt(consultantId as string));
+      }
+      
+      res.json(timeEntries);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch filtered time entries" });
+    }
+  });
+
   app.post("/api/time-entries", async (req, res) => {
     try {
       const validatedData = insertTimeEntrySchema.parse(req.body);

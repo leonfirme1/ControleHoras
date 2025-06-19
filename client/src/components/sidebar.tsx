@@ -6,7 +6,8 @@ import {
   Settings, 
   UserCheck, 
   PlusCircle, 
-  ChartBar 
+  ChartBar,
+  CheckSquare
 } from "lucide-react";
 
 const navigation = [
@@ -15,6 +16,7 @@ const navigation = [
   { name: "Serviços", href: "/services", icon: Settings },
   { name: "Consultores", href: "/consultants", icon: UserCheck },
   { name: "Lançamento de Horas", href: "/time-entries", icon: PlusCircle },
+  { name: "Atividades Executadas", href: "/activities", icon: CheckSquare },
   { name: "Relatórios", href: "/reports", icon: ChartBar },
 ];
 

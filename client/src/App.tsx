@@ -10,6 +10,7 @@ import Clients from "@/pages/clients";
 import Services from "@/pages/services";
 import Consultants from "@/pages/consultants";
 import TimeEntries from "@/pages/time-entries";
+import Activities from "@/pages/activities";
 import Reports from "@/pages/reports";
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
@@ -89,6 +90,7 @@ function Router() {
         <Route path="/services" component={Services} />
         <Route path="/consultants" component={Consultants} />
         <Route path="/time-entries" component={TimeEntries} />
+        <Route path="/activities" component={Activities} />
         <Route path="/reports" component={Reports} />
         <Route component={NotFound} />
       </Switch>
