@@ -7,16 +7,25 @@ import {
   UserCheck, 
   PlusCircle, 
   ChartBar,
-  CheckSquare
+  CheckSquare,
+  LucideIcon
 } from "lucide-react";
 
-const navigation = [
+type NavigationItem = {
+  name: string;
+  href: string;
+  icon: LucideIcon | null;
+};
+
+const navigation: NavigationItem[] = [
   { name: "Dashboard", href: "/", icon: BarChart3 },
+  { name: "Lançamento", href: "/time-entries", icon: PlusCircle },
+  { name: "Manutenção", href: "/activities", icon: CheckSquare },
+  { name: "separator", href: "", icon: null },
   { name: "Clientes", href: "/clients", icon: Users },
   { name: "Serviços", href: "/services", icon: Settings },
   { name: "Consultores", href: "/consultants", icon: UserCheck },
-  { name: "Lançamento de Horas", href: "/time-entries", icon: PlusCircle },
-  { name: "Atividades Executadas", href: "/activities", icon: CheckSquare },
+  { name: "separator", href: "", icon: null },
   { name: "Relatórios", href: "/reports", icon: ChartBar },
 ];
 
@@ -33,14 +42,22 @@ export function Sidebar() {
       </div>
       <nav className="mt-6">
         <ul className="space-y-2 px-4">
-          {navigation.map((item) => {
+          {navigation.map((item, index) => {
+            if (item.name === "separator") {
+              return (
+                <li key={`separator-${index}`} className="py-2">
+                  <div className="border-t border-gray-200"></div>
+                </li>
+              );
+            }
+            
             const isActive = location === item.href;
             const Icon = item.icon;
             
             return (
               <li key={item.name}>
                 <Link href={item.href} className={`nav-item ${isActive ? 'active' : ''}`}>
-                  <Icon className="h-5 w-5" />
+                  {Icon ? <Icon className="h-5 w-5" /> : null}
                   <span>{item.name}</span>
                 </Link>
               </li>
