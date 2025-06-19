@@ -51,10 +51,26 @@ export default function Dashboard() {
 
   const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats", queryMonth, queryYear],
+    queryFn: async () => {
+      const url = `/api/dashboard/stats?month=${queryMonth}&year=${queryYear}`;
+      const response = await fetch(url, { credentials: "include" });
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${await response.text()}`);
+      }
+      return response.json();
+    },
   });
 
   const { data: recentEntries, isLoading: entriesLoading, error: entriesError } = useQuery<TimeEntryDetailed[]>({
     queryKey: ["/api/time-entries", queryMonth, queryYear],
+    queryFn: async () => {
+      const url = `/api/time-entries?month=${queryMonth}&year=${queryYear}`;
+      const response = await fetch(url, { credentials: "include" });
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${await response.text()}`);
+      }
+      return response.json();
+    },
     select: (data) => data?.slice(0, 5) || [],
   });
 
