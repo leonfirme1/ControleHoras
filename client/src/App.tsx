@@ -50,15 +50,19 @@ function Router() {
 
   const handleLoginSuccess = (consultant: AuthUser) => {
     console.log("Login success, setting user:", consultant);
-    setUser(consultant);
-    localStorage.setItem("auth_user", JSON.stringify(consultant));
     
-    // Force a re-render and navigation
-    setTimeout(() => {
-      console.log("Redirecting to dashboard");
-      setLocation("/");
-      window.location.reload(); // Force full reload if needed
-    }, 100);
+    try {
+      setUser(consultant);
+      localStorage.setItem("auth_user", JSON.stringify(consultant));
+      
+      // Force a re-render and navigation
+      setTimeout(() => {
+        console.log("Redirecting to dashboard");
+        setLocation("/");
+      }, 100);
+    } catch (error) {
+      console.error("Error in handleLoginSuccess:", error);
+    }
   };
 
   const handleLogout = () => {

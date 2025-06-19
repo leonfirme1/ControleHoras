@@ -21,14 +21,32 @@ interface TimeEntryDetailed {
 }
 
 export default function Dashboard() {
-  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
   });
 
-  const { data: recentEntries, isLoading: entriesLoading } = useQuery<TimeEntryDetailed[]>({
+  const { data: recentEntries, isLoading: entriesLoading, error: entriesError } = useQuery<TimeEntryDetailed[]>({
     queryKey: ["/api/time-entries"],
     select: (data) => data?.slice(0, 5) || [],
   });
+
+  console.log("Dashboard render - stats:", stats, "entries:", recentEntries);
+  console.log("Dashboard errors - stats:", statsError, "entries:", entriesError);
+
+  if (statsError || entriesError) {
+    return (
+      <Layout title="Dashboard">
+        <div className="space-y-6">
+          <div className="text-center py-12">
+            <h2 className="text-xl font-semibold text-red-600 mb-2">Erro ao carregar dados</h2>
+            <p className="text-gray-600">
+              {statsError?.message || entriesError?.message || "Erro desconhecido"}
+            </p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (statsLoading || entriesLoading) {
     return (
@@ -79,7 +97,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Horas Este Mês</p>
-                <p className="text-3xl font-bold text-gray-900">{stats?.monthlyHours?.toFixed(1) || '0.0'}</p>
+                <p className="text-3xl font-bold text-gray-900">{Number(stats?.monthlyHours || 0).toFixed(1)}</p>
               </div>
               <div className="bg-green-100 p-3 rounded-full">
                 <Clock className="text-green-600 h-6 w-6" />
@@ -92,7 +110,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Faturamento Mensal</p>
                 <p className="text-3xl font-bold text-gray-900">
-                  {formatCurrency(stats?.monthlyRevenue || 0)}
+                  {formatCurrency(Number(stats?.monthlyRevenue || 0))}
                 </p>
               </div>
               <div className="bg-yellow-100 p-3 rounded-full">
