@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Plus, UserCircle } from "lucide-react";
+import { Plus, UserCircle, LogOut } from "lucide-react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/App";
 
 interface HeaderProps {
   title: string;
@@ -8,6 +9,7 @@ interface HeaderProps {
 
 export function Header({ title }: HeaderProps) {
   const [, setLocation] = useLocation();
+  const { user, logout } = useAuth();
 
   const handleNewEntry = () => {
     setLocation("/time-entries");
@@ -24,7 +26,15 @@ export function Header({ title }: HeaderProps) {
           </Button>
           <div className="flex items-center space-x-2">
             <UserCircle className="h-8 w-8 text-gray-600" />
-            <span className="text-sm text-gray-600">Usuário</span>
+            <span className="text-sm text-gray-600">{user?.name || "Usuário"}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={logout}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>

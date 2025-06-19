@@ -15,6 +15,7 @@ export const consultants = pgTable("consultants", {
   id: serial("id").primaryKey(),
   code: text("code").notNull().unique(),
   name: text("name").notNull(),
+  password: text("password").notNull(),
 });
 
 export const services = pgTable("services", {
@@ -54,6 +55,12 @@ export const insertConsultantSchema = createInsertSchema(consultants).omit({
   id: true,
 });
 
+// Schema para login
+export const loginSchema = z.object({
+  code: z.string().min(1, "Código é obrigatório"),
+  password: z.string().min(1, "Senha é obrigatória"),
+});
+
 // Schema para validação do backend (converte string para number)
 export const insertServiceSchema = z.object({
   code: z.string().min(1, "Código é obrigatório"),
@@ -82,6 +89,7 @@ export type Client = typeof clients.$inferSelect;
 
 export type InsertConsultant = z.infer<typeof insertConsultantSchema>;
 export type Consultant = typeof consultants.$inferSelect;
+export type LoginData = z.infer<typeof loginSchema>;
 
 export type InsertService = z.infer<typeof insertServiceSchema>;
 export type InsertServiceForm = z.infer<typeof insertServiceFormSchema>;

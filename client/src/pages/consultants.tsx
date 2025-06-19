@@ -27,6 +27,7 @@ export default function Consultants() {
     defaultValues: {
       code: "",
       name: "",
+      password: "",
     },
   });
 
@@ -167,6 +168,19 @@ export default function Consultants() {
                           <FormLabel>Nome Completo</FormLabel>
                           <FormControl>
                             <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Senha</FormLabel>
+                          <FormControl>
+                            <Input type="password" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

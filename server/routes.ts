@@ -5,11 +5,35 @@ import {
   insertClientSchema, 
   insertConsultantSchema, 
   insertServiceSchema, 
-  insertTimeEntrySchema 
+  insertTimeEntrySchema,
+  loginSchema 
 } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication routes
+  app.post("/api/login", async (req, res) => {
+    try {
+      const validatedData = loginSchema.parse(req.body);
+      const consultant = await storage.authenticateConsultant(validatedData);
+      
+      if (!consultant) {
+        return res.status(401).json({ message: "Código ou senha inválidos" });
+      }
+
+      // Remove password from response
+      const { password, ...consultantData } = consultant;
+      res.json({ consultant: consultantData, message: "Login realizado com sucesso" });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+      } else {
+        console.error("Login error:", error);
+        res.status(500).json({ message: "Erro interno do servidor" });
+      }
+    }
+  });
+
   // Clients routes
   app.get("/api/clients", async (req, res) => {
     try {

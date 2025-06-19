@@ -12,10 +12,12 @@ import {
   type InsertService, 
   type InsertTimeEntry,
   type ServiceWithClient,
-  type TimeEntryDetailed
+  type TimeEntryDetailed,
+  type LoginData
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
+import bcrypt from "bcrypt";
 
 export interface IStorage {
   // Clients
@@ -33,6 +35,9 @@ export interface IStorage {
   createConsultant(consultant: InsertConsultant): Promise<Consultant>;
   updateConsultant(id: number, consultant: Partial<InsertConsultant>): Promise<Consultant | undefined>;
   deleteConsultant(id: number): Promise<boolean>;
+
+  // Authentication
+  authenticateConsultant(loginData: LoginData): Promise<Consultant | null>;
 
   // Services
   getServices(): Promise<ServiceWithClient[]>;
@@ -457,6 +462,23 @@ export class MemStorage implements IStorage {
       clientBreakdown
     };
   }
+
+  // Authentication
+  async authenticateConsultant(loginData: LoginData): Promise<Consultant | null> {
+    const consultant = await this.getConsultantByCode(loginData.code);
+    
+    if (!consultant) {
+      return null;
+    }
+
+    const isValidPassword = await bcrypt.compare(loginData.password, consultant.password);
+    
+    if (!isValidPassword) {
+      return null;
+    }
+
+    return consultant;
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -506,18 +528,44 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createConsultant(insertConsultant: InsertConsultant): Promise<Consultant> {
-    const [consultant] = await db.insert(consultants).values(insertConsultant).returning();
+    const hashedPassword = await bcrypt.hash(insertConsultant.password, 10);
+    const consultantData = {
+      ...insertConsultant,
+      password: hashedPassword
+    };
+    const [consultant] = await db.insert(consultants).values(consultantData).returning();
     return consultant;
   }
 
   async updateConsultant(id: number, updateData: Partial<InsertConsultant>): Promise<Consultant | undefined> {
-    const [consultant] = await db.update(consultants).set(updateData).where(eq(consultants.id, id)).returning();
+    const consultantData: any = { ...updateData };
+    if (consultantData.password) {
+      consultantData.password = await bcrypt.hash(consultantData.password, 10);
+    }
+    const [consultant] = await db.update(consultants).set(consultantData).where(eq(consultants.id, id)).returning();
     return consultant || undefined;
   }
 
   async deleteConsultant(id: number): Promise<boolean> {
     const result = await db.delete(consultants).where(eq(consultants.id, id));
     return (result.rowCount ?? 0) > 0;
+  }
+
+  // Authentication
+  async authenticateConsultant(loginData: LoginData): Promise<Consultant | null> {
+    const [consultant] = await db.select().from(consultants).where(eq(consultants.code, loginData.code));
+    
+    if (!consultant) {
+      return null;
+    }
+
+    const isValidPassword = await bcrypt.compare(loginData.password, consultant.password);
+    
+    if (!isValidPassword) {
+      return null;
+    }
+
+    return consultant;
   }
 
   // Services
