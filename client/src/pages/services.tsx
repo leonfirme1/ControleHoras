@@ -18,7 +18,7 @@ export default function Services() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceWithClient | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedClientFilter, setSelectedClientFilter] = useState<string>("");
+  const [selectedClientFilter, setSelectedClientFilter] = useState<string>("all");
   const { toast } = useToast();
 
   const { data: services, isLoading: servicesLoading } = useQuery<ServiceWithClient[]>({
@@ -140,7 +140,7 @@ export default function Services() {
       service.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.client.name.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesClient = !selectedClientFilter || service.clientId.toString() === selectedClientFilter;
+    const matchesClient = !selectedClientFilter || selectedClientFilter === "all" || service.clientId.toString() === selectedClientFilter;
     
     return matchesSearch && matchesClient;
   }) || [];
@@ -290,7 +290,7 @@ export default function Services() {
                 <SelectValue placeholder="Todos os clientes" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os clientes</SelectItem>
+                <SelectItem value="all">Todos os clientes</SelectItem>
                 {clients?.map((client) => (
                   <SelectItem key={client.id} value={client.id.toString()}>
                     {client.name}

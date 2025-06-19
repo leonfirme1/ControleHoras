@@ -37,11 +37,9 @@ export function Sidebar() {
             
             return (
               <li key={item.name}>
-                <Link href={item.href}>
-                  <a className={`nav-item ${isActive ? 'active' : ''}`}>
-                    <Icon className="h-5 w-5" />
-                    <span>{item.name}</span>
-                  </a>
+                <Link href={item.href} className={`nav-item ${isActive ? 'active' : ''}`}>
+                  <Icon className="h-5 w-5" />
+                  <span>{item.name}</span>
                 </Link>
               </li>
             );

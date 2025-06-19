@@ -32,7 +32,7 @@ export const timeEntries = pgTable("time_entries", {
   serviceId: integer("service_id").notNull().references(() => services.id),
   startTime: text("start_time").notNull(), // HH:MM format
   endTime: text("end_time").notNull(), // HH:MM format
-  description: text("description"),
+  description: text("description").default(""),
   totalHours: decimal("total_hours", { precision: 5, scale: 2 }).notNull(),
   totalValue: decimal("total_value", { precision: 10, scale: 2 }).notNull(),
 });

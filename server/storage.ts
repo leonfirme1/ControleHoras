@@ -282,6 +282,7 @@ export class MemStorage implements IStorage {
     const timeEntry: TimeEntry = { 
       ...insertTimeEntry, 
       id,
+      description: insertTimeEntry.description || "",
       totalHours: hours.toString(),
       totalValue: value.toString()
     };
@@ -394,9 +395,9 @@ export class MemStorage implements IStorage {
       entries: number;
     }> = [];
     
-    for (const clientId of clientIds) {
+    clientIds.forEach(clientId => {
       const client = this.clients.get(clientId);
-      if (!client) continue;
+      if (!client) return;
       
       const clientEntries = filteredEntries.filter(entry => entry.clientId === clientId);
       const clientHours = clientEntries.reduce((sum, entry) => sum + parseFloat(entry.totalHours), 0);
@@ -409,7 +410,7 @@ export class MemStorage implements IStorage {
         value: clientValue,
         entries: clientEntries.length
       });
-    }
+    });
     
     clientBreakdown.sort((a, b) => b.value - a.value);
     
