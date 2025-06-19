@@ -27,8 +27,8 @@ export default function Activities() {
   const [filters, setFilters] = useState({
     startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
-    clientId: '',
-    consultantId: ''
+    clientId: 'all',
+    consultantId: 'all'
   });
 
   const { toast } = useToast();
@@ -40,8 +40,8 @@ export default function Activities() {
       const params = new URLSearchParams();
       if (filters.startDate) params.set('startDate', filters.startDate);
       if (filters.endDate) params.set('endDate', filters.endDate);
-      if (filters.clientId) params.set('clientId', filters.clientId);
-      if (filters.consultantId) params.set('consultantId', filters.consultantId);
+      if (filters.clientId && filters.clientId !== 'all') params.set('clientId', filters.clientId);
+      if (filters.consultantId && filters.consultantId !== 'all') params.set('consultantId', filters.consultantId);
       
       const response = await fetch(`/api/time-entries/filtered?${params.toString()}`, {
         credentials: "include",
@@ -106,8 +106,8 @@ export default function Activities() {
     setFilters({
       startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
       endDate: new Date().toISOString().split('T')[0],
-      clientId: '',
-      consultantId: ''
+      clientId: 'all',
+      consultantId: 'all'
     });
   };
 
@@ -174,7 +174,7 @@ export default function Activities() {
                     <SelectValue placeholder="Todos os clientes" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os clientes</SelectItem>
+                    <SelectItem value="all">Todos os clientes</SelectItem>
                     {clients?.map((client) => (
                       <SelectItem key={client.id} value={client.id.toString()}>
                         {client.name}
@@ -194,7 +194,7 @@ export default function Activities() {
                     <SelectValue placeholder="Todos os consultores" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os consultores</SelectItem>
+                    <SelectItem value="all">Todos os consultores</SelectItem>
                     {consultants?.map((consultant) => (
                       <SelectItem key={consultant.id} value={consultant.id.toString()}>
                         {consultant.name}
