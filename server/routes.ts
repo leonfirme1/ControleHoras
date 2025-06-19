@@ -242,8 +242,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Time entries routes
   app.get("/api/time-entries", async (req, res) => {
     try {
-      const timeEntries = await storage.getTimeEntries();
-      res.json(timeEntries);
+      const month = req.query.month ? parseInt(req.query.month as string) : undefined;
+      const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+      
+      if (month && year) {
+        const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
+        const endDate = `${year}-${month.toString().padStart(2, '0')}-31`;
+        const timeEntries = await storage.getTimeEntriesByDateRange(startDate, endDate);
+        res.json(timeEntries);
+      } else {
+        const timeEntries = await storage.getTimeEntries();
+        res.json(timeEntries);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch time entries" });
     }
@@ -298,7 +308,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {
     try {
-      const stats = await storage.getDashboardStats();
+      const month = req.query.month ? parseInt(req.query.month as string) : undefined;
+      const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+      const stats = await storage.getDashboardStats(month, year);
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch dashboard stats" });

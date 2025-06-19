@@ -58,11 +58,23 @@ export interface IStorage {
   deleteTimeEntry(id: number): Promise<boolean>;
 
   // Dashboard stats
-  getDashboardStats(): Promise<{
+  getDashboardStats(month?: number, year?: number): Promise<{
     totalClients: number;
     monthlyHours: number;
     monthlyRevenue: number;
     activeConsultants: number;
+    consultantStats: Array<{
+      consultantId: number;
+      consultantName: string;
+      totalHours: number;
+      totalValue: number;
+    }>;
+    clientStats: Array<{
+      clientId: number;
+      clientName: string;
+      totalHours: number;
+      totalValue: number;
+    }>;
   }>;
 
   // Reports
@@ -359,26 +371,81 @@ export class MemStorage implements IStorage {
   }
 
   // Dashboard stats
-  async getDashboardStats(): Promise<{
+  async getDashboardStats(month?: number, year?: number): Promise<{
     totalClients: number;
     monthlyHours: number;
     monthlyRevenue: number;
     activeConsultants: number;
+    consultantStats: Array<{
+      consultantId: number;
+      consultantName: string;
+      totalHours: number;
+      totalValue: number;
+    }>;
+    clientStats: Array<{
+      clientId: number;
+      clientName: string;
+      totalHours: number;
+      totalValue: number;
+    }>;
   }> {
-    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const targetYear = year || new Date().getFullYear();
+    const targetMonth = month || (new Date().getMonth() + 1);
+    const monthStr = `${targetYear}-${targetMonth.toString().padStart(2, '0')}`;
+    
     const monthlyEntries = Array.from(this.timeEntries.values())
-      .filter(entry => entry.date.startsWith(currentMonth));
+      .filter(entry => entry.date.startsWith(monthStr));
     
     const monthlyHours = monthlyEntries.reduce((sum, entry) => sum + parseFloat(entry.totalHours), 0);
     const monthlyRevenue = monthlyEntries.reduce((sum, entry) => sum + parseFloat(entry.totalValue), 0);
     
-    const activeConsultantIds = new Set(monthlyEntries.map(entry => entry.consultantId));
+    // Aggregate by consultant
+    const consultantMap = new Map<number, { name: string; hours: number; value: number }>();
+    monthlyEntries.forEach(entry => {
+      const consultant = this.consultants.get(entry.consultantId);
+      if (consultant) {
+        const existing = consultantMap.get(entry.consultantId) || 
+          { name: consultant.name, hours: 0, value: 0 };
+        existing.hours += parseFloat(entry.totalHours);
+        existing.value += parseFloat(entry.totalValue);
+        consultantMap.set(entry.consultantId, existing);
+      }
+    });
+
+    // Aggregate by client
+    const clientMap = new Map<number, { name: string; hours: number; value: number }>();
+    monthlyEntries.forEach(entry => {
+      const client = this.clients.get(entry.clientId);
+      if (client) {
+        const existing = clientMap.get(entry.clientId) || 
+          { name: client.name, hours: 0, value: 0 };
+        existing.hours += parseFloat(entry.totalHours);
+        existing.value += parseFloat(entry.totalValue);
+        clientMap.set(entry.clientId, existing);
+      }
+    });
+
+    const consultantStats = Array.from(consultantMap.entries()).map(([id, data]) => ({
+      consultantId: id,
+      consultantName: data.name,
+      totalHours: data.hours,
+      totalValue: data.value,
+    }));
+
+    const clientStats = Array.from(clientMap.entries()).map(([id, data]) => ({
+      clientId: id,
+      clientName: data.name,
+      totalHours: data.hours,
+      totalValue: data.value,
+    }));
     
     return {
       totalClients: this.clients.size,
       monthlyHours,
       monthlyRevenue,
-      activeConsultants: activeConsultantIds.size
+      activeConsultants: consultantMap.size,
+      consultantStats,
+      clientStats,
     };
   }
 
@@ -769,30 +836,94 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Dashboard stats
-  async getDashboardStats(): Promise<{
+  async getDashboardStats(month?: number, year?: number): Promise<{
     totalClients: number;
     monthlyHours: number;
     monthlyRevenue: number;
     activeConsultants: number;
+    consultantStats: Array<{
+      consultantId: number;
+      consultantName: string;
+      totalHours: number;
+      totalValue: number;
+    }>;
+    clientStats: Array<{
+      clientId: number;
+      clientName: string;
+      totalHours: number;
+      totalValue: number;
+    }>;
   }> {
-    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const targetYear = year || new Date().getFullYear();
+    const targetMonth = month || (new Date().getMonth() + 1);
+    const monthStr = `${targetYear}-${targetMonth.toString().padStart(2, '0')}`;
     
     const [clientsCount] = await db.select({ count: sql<number>`count(*)` }).from(clients);
-    const [consultantsCount] = await db.select({ count: sql<number>`count(*)` }).from(consultants);
     
+    // Get all entries for the specified month with consultant and client data
     const monthlyEntries = await db
       .select({
-        totalHours: sql<number>`sum(${timeEntries.totalHours})`,
-        totalValue: sql<number>`sum(${timeEntries.totalValue})`
+        id: timeEntries.id,
+        totalHours: timeEntries.totalHours,
+        totalValue: timeEntries.totalValue,
+        consultantId: timeEntries.consultantId,
+        clientId: timeEntries.clientId,
+        consultantName: consultants.name,
+        clientName: clients.name,
       })
       .from(timeEntries)
-      .where(sql`${timeEntries.date} >= ${currentMonth + '-01'} AND ${timeEntries.date} < ${currentMonth + '-32'}`);
+      .leftJoin(consultants, eq(timeEntries.consultantId, consultants.id))
+      .leftJoin(clients, eq(timeEntries.clientId, clients.id))
+      .where(sql`${timeEntries.date} >= ${monthStr + '-01'} AND ${timeEntries.date} < ${monthStr + '-32'}`);
+
+    const totalHours = monthlyEntries.reduce((sum, entry) => sum + parseFloat(entry.totalHours), 0);
+    const totalValue = monthlyEntries.reduce((sum, entry) => sum + parseFloat(entry.totalValue), 0);
+
+    // Aggregate by consultant
+    const consultantMap = new Map<number, { name: string; hours: number; value: number }>();
+    monthlyEntries.forEach(entry => {
+      if (entry.consultantId && entry.consultantName) {
+        const existing = consultantMap.get(entry.consultantId) || 
+          { name: entry.consultantName, hours: 0, value: 0 };
+        existing.hours += parseFloat(entry.totalHours);
+        existing.value += parseFloat(entry.totalValue);
+        consultantMap.set(entry.consultantId, existing);
+      }
+    });
+
+    // Aggregate by client
+    const clientMap = new Map<number, { name: string; hours: number; value: number }>();
+    monthlyEntries.forEach(entry => {
+      if (entry.clientId && entry.clientName) {
+        const existing = clientMap.get(entry.clientId) || 
+          { name: entry.clientName, hours: 0, value: 0 };
+        existing.hours += parseFloat(entry.totalHours);
+        existing.value += parseFloat(entry.totalValue);
+        clientMap.set(entry.clientId, existing);
+      }
+    });
+
+    const consultantStats = Array.from(consultantMap.entries()).map(([id, data]) => ({
+      consultantId: id,
+      consultantName: data.name,
+      totalHours: data.hours,
+      totalValue: data.value,
+    }));
+
+    const clientStats = Array.from(clientMap.entries()).map(([id, data]) => ({
+      clientId: id,
+      clientName: data.name,
+      totalHours: data.hours,
+      totalValue: data.value,
+    }));
 
     return {
       totalClients: clientsCount.count,
-      monthlyHours: monthlyEntries[0]?.totalHours || 0,
-      monthlyRevenue: monthlyEntries[0]?.totalValue || 0,
-      activeConsultants: consultantsCount.count,
+      monthlyHours: totalHours,
+      monthlyRevenue: totalValue,
+      activeConsultants: consultantMap.size,
+      consultantStats,
+      clientStats,
     };
   }
 

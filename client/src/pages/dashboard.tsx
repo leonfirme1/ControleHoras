@@ -1,13 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Layout } from "@/components/layout";
-import { Card, CardContent } from "@/components/ui/card";
-import { Users, Clock, DollarSign, UserCheck } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Users, Clock, DollarSign, UserCheck, Calendar } from "lucide-react";
 
 interface DashboardStats {
   totalClients: number;
   monthlyHours: number;
   monthlyRevenue: number;
   activeConsultants: number;
+  consultantStats: Array<{
+    consultantId: number;
+    consultantName: string;
+    totalHours: number;
+    totalValue: number;
+  }>;
+  clientStats: Array<{
+    clientId: number;
+    clientName: string;
+    totalHours: number;
+    totalValue: number;
+  }>;
 }
 
 interface TimeEntryDetailed {
@@ -21,12 +35,26 @@ interface TimeEntryDetailed {
 }
 
 export default function Dashboard() {
+  const [selectedMonth, setSelectedMonth] = useState<'current' | 'previous'>('current');
+  
+  // Calculate month parameters
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentYear = currentDate.getFullYear();
+  
+  const previousDate = new Date(currentYear, currentMonth - 2, 1);
+  const previousMonth = previousDate.getMonth() + 1;
+  const previousYear = previousDate.getFullYear();
+  
+  const queryMonth = selectedMonth === 'current' ? currentMonth : previousMonth;
+  const queryYear = selectedMonth === 'current' ? currentYear : previousYear;
+
   const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<DashboardStats>({
-    queryKey: ["/api/dashboard/stats"],
+    queryKey: ["/api/dashboard/stats", queryMonth, queryYear],
   });
 
   const { data: recentEntries, isLoading: entriesLoading, error: entriesError } = useQuery<TimeEntryDetailed[]>({
-    queryKey: ["/api/time-entries"],
+    queryKey: ["/api/time-entries", queryMonth, queryYear],
     select: (data) => data?.slice(0, 5) || [],
   });
 
@@ -76,115 +104,157 @@ export default function Dashboard() {
     return name.split(' ').map(word => word.charAt(0)).join('').substring(0, 2).toUpperCase();
   };
 
+  const monthNames = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+
+  const currentMonthName = monthNames[currentMonth - 1];
+  const previousMonthName = monthNames[previousMonth - 1];
+
   return (
     <Layout title="Dashboard">
       <div className="space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="stats-card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total de Clientes</p>
-                <p className="text-3xl font-bold text-gray-900">{stats?.totalClients || 0}</p>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-full">
-                <Users className="text-primary h-6 w-6" />
-              </div>
-            </div>
-          </div>
-
-          <div className="stats-card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Horas Este Mês</p>
-                <p className="text-3xl font-bold text-gray-900">{Number(stats?.monthlyHours || 0).toFixed(1)}</p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-full">
-                <Clock className="text-green-600 h-6 w-6" />
-              </div>
-            </div>
-          </div>
-
-          <div className="stats-card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Faturamento Mensal</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {formatCurrency(Number(stats?.monthlyRevenue || 0))}
-                </p>
-              </div>
-              <div className="bg-yellow-100 p-3 rounded-full">
-                <DollarSign className="text-yellow-600 h-6 w-6" />
-              </div>
-            </div>
-          </div>
-
-          <div className="stats-card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Consultores Ativos</p>
-                <p className="text-3xl font-bold text-gray-900">{stats?.activeConsultants || 0}</p>
-              </div>
-              <div className="bg-purple-100 p-3 rounded-full">
-                <UserCheck className="text-purple-600 h-6 w-6" />
-              </div>
-            </div>
+        {/* Month Filter Buttons */}
+        <div className="flex items-center gap-4 mb-6">
+          <Calendar className="h-5 w-5 text-gray-600" />
+          <div className="flex gap-2">
+            <Button
+              variant={selectedMonth === 'current' ? 'default' : 'outline'}
+              onClick={() => setSelectedMonth('current')}
+            >
+              MÊS ATUAL ({currentMonthName})
+            </Button>
+            <Button
+              variant={selectedMonth === 'previous' ? 'default' : 'outline'}
+              onClick={() => setSelectedMonth('previous')}
+            >
+              MÊS ANTERIOR ({previousMonthName})
+            </Button>
           </div>
         </div>
 
-        {/* Recent Activity */}
+        {/* Summary Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Geral de Horas</p>
+                  <p className="text-3xl font-bold text-gray-900">{Number(stats?.monthlyHours || 0).toFixed(1)}</p>
+                </div>
+                <div className="bg-blue-100 p-3 rounded-full">
+                  <Clock className="text-blue-600 h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Valor Financeiro Total</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {formatCurrency(Number(stats?.monthlyRevenue || 0))}
+                  </p>
+                </div>
+                <div className="bg-green-100 p-3 rounded-full">
+                  <DollarSign className="text-green-600 h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total de Clientes</p>
+                  <p className="text-3xl font-bold text-gray-900">{stats?.totalClients || 0}</p>
+                </div>
+                <div className="bg-purple-100 p-3 rounded-full">
+                  <Users className="text-purple-600 h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Detailed Stats by Consultant and Client */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="content-card">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800">Atividades Recentes</h3>
-            </div>
-            <div className="p-6">
-              {recentEntries && recentEntries.length > 0 ? (
+          {/* By Consultant */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCheck className="h-5 w-5" />
+                Horas e Valores por Consultor
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {stats?.consultantStats && stats.consultantStats.length > 0 ? (
                 <div className="space-y-4">
-                  {recentEntries.map((entry) => (
-                    <div key={entry.id} className="flex items-start space-x-3">
-                      <div className="bg-blue-100 p-2 rounded-full">
-                        <Clock className="text-primary h-4 w-4" />
+                  {stats.consultantStats.map((consultant) => (
+                    <div key={consultant.consultantId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-gray-900">{consultant.consultantName}</p>
+                        <p className="text-sm text-gray-600">{consultant.totalHours.toFixed(1)} horas</p>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Novo lançamento de horas</p>
-                        <p className="text-xs text-gray-600">
-                          Cliente: {entry.client.name} - {parseFloat(entry.totalHours).toFixed(1)}h trabalhadas
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {entry.consultant.name} • {new Date(entry.date).toLocaleDateString('pt-BR')}
+                      <div className="text-right">
+                        <p className="font-semibold text-gray-900">
+                          {formatCurrency(consultant.totalValue)}
                         </p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">Nenhum lançamento encontrado</p>
+                <div className="text-center py-8 text-gray-500">
+                  <UserCheck className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <p>Nenhum dado de consultor encontrado</p>
+                </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="content-card">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800">Resumo do Sistema</h3>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Sistema de Controle de Horas</span>
-                  <span className="text-sm font-semibold text-green-600">Ativo</span>
+          {/* By Client */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Horas e Valores por Cliente
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {stats?.clientStats && stats.clientStats.length > 0 ? (
+                <div className="space-y-4">
+                  {stats.clientStats.map((client) => (
+                    <div key={client.clientId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-semibold text-sm">
+                          {getClientInitials(client.clientName)}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{client.clientName}</p>
+                          <p className="text-sm text-gray-600">{client.totalHours.toFixed(1)} horas</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-gray-900">
+                          {formatCurrency(client.totalValue)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Última atualização</span>
-                  <span className="text-sm font-semibold text-gray-900">{new Date().toLocaleDateString('pt-BR')}</span>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <p>Nenhum dado de cliente encontrado</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Versão</span>
-                  <span className="text-sm font-semibold text-gray-900">1.0.0</span>
-                </div>
-              </div>
-            </div>
-          </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </Layout>
