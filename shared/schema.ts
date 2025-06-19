@@ -46,10 +46,11 @@ export const insertConsultantSchema = createInsertSchema(consultants).omit({
   id: true,
 });
 
-export const insertServiceSchema = createInsertSchema(services).omit({
-  id: true,
-}).extend({
-  hourlyRate: z.string().transform((val) => parseFloat(val)),
+export const insertServiceSchema = z.object({
+  code: z.string().min(1, "Código é obrigatório"),
+  clientId: z.number().min(1, "Cliente é obrigatório"),
+  description: z.string().min(1, "Descrição é obrigatória"),
+  hourlyRate: z.string().transform((val) => parseFloat(val)).refine((val) => val >= 0, "Valor deve ser maior que zero"),
 });
 
 export const insertTimeEntrySchema = createInsertSchema(timeEntries).omit({

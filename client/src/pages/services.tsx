@@ -243,7 +243,7 @@ export default function Services() {
                               {...field}
                               type="number"
                               step="0.01"
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              onChange={(e) => field.onChange(e.target.value)}
                             />
                           </FormControl>
                           <FormMessage />
