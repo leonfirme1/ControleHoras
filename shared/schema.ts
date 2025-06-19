@@ -46,11 +46,20 @@ export const insertConsultantSchema = createInsertSchema(consultants).omit({
   id: true,
 });
 
+// Schema para validação do backend (converte string para number)
 export const insertServiceSchema = z.object({
   code: z.string().min(1, "Código é obrigatório"),
   clientId: z.number().min(1, "Cliente é obrigatório"),
   description: z.string().min(1, "Descrição é obrigatória"),
   hourlyRate: z.string().transform((val) => parseFloat(val)).refine((val) => val >= 0, "Valor deve ser maior que zero"),
+});
+
+// Schema para o formulário frontend (mantém string)
+export const insertServiceFormSchema = z.object({
+  code: z.string().min(1, "Código é obrigatório"),
+  clientId: z.number().min(1, "Cliente é obrigatório"),
+  description: z.string().min(1, "Descrição é obrigatória"),
+  hourlyRate: z.string().min(1, "Valor por hora é obrigatório"),
 });
 
 export const insertTimeEntrySchema = createInsertSchema(timeEntries).omit({
@@ -67,6 +76,7 @@ export type InsertConsultant = z.infer<typeof insertConsultantSchema>;
 export type Consultant = typeof consultants.$inferSelect;
 
 export type InsertService = z.infer<typeof insertServiceSchema>;
+export type InsertServiceForm = z.infer<typeof insertServiceFormSchema>;
 export type Service = typeof services.$inferSelect;
 
 export type InsertTimeEntry = z.infer<typeof insertTimeEntrySchema>;

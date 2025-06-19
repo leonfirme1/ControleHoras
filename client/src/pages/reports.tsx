@@ -25,8 +25,8 @@ interface ReportData {
 export default function Reports() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [selectedClient, setSelectedClient] = useState("");
-  const [selectedConsultant, setSelectedConsultant] = useState("");
+  const [selectedClient, setSelectedClient] = useState("all");
+  const [selectedConsultant, setSelectedConsultant] = useState("all");
 
   const { data: clients } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
@@ -42,8 +42,8 @@ export default function Reports() {
       const params = new URLSearchParams();
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
-      if (selectedClient) params.append("clientId", selectedClient);
-      if (selectedConsultant) params.append("consultantId", selectedConsultant);
+      if (selectedClient && selectedClient !== "all") params.append("clientId", selectedClient);
+      if (selectedConsultant && selectedConsultant !== "all") params.append("consultantId", selectedConsultant);
       
       const response = await fetch(`/api/reports?${params}`);
       if (!response.ok) throw new Error("Failed to fetch report data");
@@ -101,7 +101,7 @@ export default function Reports() {
                   <SelectValue placeholder="Todos os clientes" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os clientes</SelectItem>
+                  <SelectItem value="all">Todos os clientes</SelectItem>
                   {clients?.map((client) => (
                     <SelectItem key={client.id} value={client.id.toString()}>
                       {client.name}
@@ -117,7 +117,7 @@ export default function Reports() {
                   <SelectValue placeholder="Todos os consultores" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os consultores</SelectItem>
+                  <SelectItem value="all">Todos os consultores</SelectItem>
                   {consultants?.map((consultant) => (
                     <SelectItem key={consultant.id} value={consultant.id.toString()}>
                       {consultant.name}

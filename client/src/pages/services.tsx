@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertServiceSchema, type ServiceWithClient, type InsertService, type Client } from "@shared/schema";
+import { insertServiceFormSchema, type ServiceWithClient, type InsertService, type InsertServiceForm, type Client } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -29,18 +29,18 @@ export default function Services() {
     queryKey: ["/api/clients"],
   });
 
-  const form = useForm<InsertService>({
-    resolver: zodResolver(insertServiceSchema),
+  const form = useForm<InsertServiceForm>({
+    resolver: zodResolver(insertServiceFormSchema),
     defaultValues: {
       code: "",
       clientId: 0,
       description: "",
-      hourlyRate: 0,
+      hourlyRate: "",
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: InsertService) => apiRequest("POST", "/api/services", data),
+    mutationFn: (data: InsertServiceForm) => apiRequest("POST", "/api/services", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/services"] });
       setIsDialogOpen(false);
@@ -60,7 +60,7 @@ export default function Services() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<InsertService> }) =>
+    mutationFn: ({ id, data }: { id: number; data: Partial<InsertServiceForm> }) =>
       apiRequest("PUT", `/api/services/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/services"] });
@@ -99,7 +99,7 @@ export default function Services() {
     },
   });
 
-  const onSubmit = (data: InsertService) => {
+  const onSubmit = (data: InsertServiceForm) => {
     if (editingService) {
       updateMutation.mutate({ id: editingService.id, data });
     } else {
@@ -113,7 +113,7 @@ export default function Services() {
       code: service.code,
       clientId: service.clientId,
       description: service.description,
-      hourlyRate: parseFloat(service.hourlyRate),
+      hourlyRate: service.hourlyRate.toString(),
     });
     setIsDialogOpen(true);
   };
@@ -130,7 +130,7 @@ export default function Services() {
       code: "",
       clientId: 0,
       description: "",
-      hourlyRate: 0,
+      hourlyRate: "",
     });
     setIsDialogOpen(true);
   };
