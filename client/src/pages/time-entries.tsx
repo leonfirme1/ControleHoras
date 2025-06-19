@@ -17,15 +17,18 @@ import {
   type Service 
 } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Save, Edit } from "lucide-react";
+import { Save, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/App";
 
 export default function TimeEntries() {
   const [calculatedHours, setCalculatedHours] = useState(0);
   const [calculatedValue, setCalculatedValue] = useState(0);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [clientServices, setClientServices] = useState<Service[]>([]);
+  const [editingEntry, setEditingEntry] = useState<TimeEntryDetailed | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const { data: timeEntries, isLoading: entriesLoading } = useQuery<TimeEntryDetailed[]>({
     queryKey: ["/api/time-entries"],
@@ -39,11 +42,15 @@ export default function TimeEntries() {
     queryKey: ["/api/consultants"],
   });
 
+  // Find the current user's consultant ID
+  const currentConsultant = consultants?.find(c => c.id === user?.id);
+  const defaultConsultantId = currentConsultant?.id || 0;
+
   const form = useForm<InsertTimeEntry>({
     resolver: zodResolver(insertTimeEntrySchema),
     defaultValues: {
       date: new Date().toISOString().split('T')[0],
-      consultantId: 0,
+      consultantId: defaultConsultantId,
       clientId: 0,
       serviceId: 0,
       startTime: "",
@@ -59,24 +66,19 @@ export default function TimeEntries() {
     },
   });
 
+  // Update form when consultants data is loaded
+  useEffect(() => {
+    if (currentConsultant && !editingEntry) {
+      form.setValue('consultantId', currentConsultant.id);
+    }
+  }, [currentConsultant, form, editingEntry]);
+
   const createMutation = useMutation({
     mutationFn: (data: InsertTimeEntry) => apiRequest("POST", "/api/time-entries", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
-      form.reset({
-        date: new Date().toISOString().split('T')[0],
-        consultantId: 0,
-        clientId: 0,
-        serviceId: 0,
-        startTime: "",
-        endTime: "",
-        description: "",
-      });
-      setCalculatedHours(0);
-      setCalculatedValue(0);
-      setSelectedService(null);
-      setClientServices([]);
+      resetForm();
       toast({
         title: "Sucesso",
         description: "Lançamento de horas criado com sucesso",
@@ -90,6 +92,109 @@ export default function TimeEntries() {
       });
     },
   });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<InsertTimeEntry> }) => 
+      apiRequest("PUT", `/api/time-entries/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      resetForm();
+      setEditingEntry(null);
+      toast({
+        title: "Sucesso",
+        description: "Lançamento de horas atualizado com sucesso",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao atualizar lançamento",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/time-entries/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      toast({
+        title: "Sucesso",
+        description: "Lançamento de horas excluído com sucesso",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao excluir lançamento",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Helper function to reset form
+  const resetForm = () => {
+    form.reset({
+      date: new Date().toISOString().split('T')[0],
+      consultantId: defaultConsultantId,
+      clientId: 0,
+      serviceId: 0,
+      startTime: "",
+      endTime: "",
+      breakStartTime: "",
+      breakEndTime: "",
+      description: "",
+      activityCompleted: "",
+      deliveryForecast: "",
+      actualDelivery: "",
+      project: "",
+      serviceLocation: "",
+    });
+    setCalculatedHours(0);
+    setCalculatedValue(0);
+    setSelectedService(null);
+    setClientServices([]);
+    setEditingEntry(null);
+  };
+
+  // Function to load entry for editing
+  const handleEdit = (entry: TimeEntryDetailed) => {
+    setEditingEntry(entry);
+    form.reset({
+      date: entry.date,
+      consultantId: entry.consultantId,
+      clientId: entry.clientId,
+      serviceId: entry.serviceId,
+      startTime: entry.startTime,
+      endTime: entry.endTime,
+      breakStartTime: entry.breakStartTime || "",
+      breakEndTime: entry.breakEndTime || "",
+      description: entry.description || "",
+      activityCompleted: entry.activityCompleted || "",
+      deliveryForecast: entry.deliveryForecast || "",
+      actualDelivery: entry.actualDelivery || "",
+      project: entry.project || "",
+      serviceLocation: entry.serviceLocation || "",
+    });
+    
+    // Load the client's services and set calculated values
+    if (entry.service) {
+      setSelectedService(entry.service);
+      const hours = parseFloat(entry.totalHours);
+      const value = parseFloat(entry.totalValue);
+      setCalculatedHours(hours);
+      setCalculatedValue(value);
+    }
+  };
+
+  // Function to handle delete
+  const handleDelete = (id: number) => {
+    if (window.confirm("Tem certeza que deseja excluir este lançamento?")) {
+      deleteMutation.mutate(id);
+    }
+  };
 
   const watchedClientId = form.watch("clientId");
   const watchedStartTime = form.watch("startTime");
@@ -174,7 +279,11 @@ export default function TimeEntries() {
   }, [watchedStartTime, watchedEndTime, watchedBreakStartTime, watchedBreakEndTime, selectedService]);
 
   const onSubmit = (data: InsertTimeEntry) => {
-    createMutation.mutate(data);
+    if (editingEntry) {
+      updateMutation.mutate({ id: editingEntry.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
   };
 
   const formatTime = (hours: number) => {
@@ -227,7 +336,20 @@ export default function TimeEntries() {
         {/* Form for new time entry */}
         <div className="content-card">
           <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800">Novo Lançamento de Horas</h3>
+            <h3 className="text-lg font-semibold text-gray-800">
+              {editingEntry ? "Editar Lançamento de Horas" : "Novo Lançamento de Horas"}
+            </h3>
+            {editingEntry && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={resetForm}
+                className="mt-2"
+              >
+                Cancelar Edição
+              </Button>
+            )}
           </div>
           <div className="p-6">
             <Form {...form}>
@@ -240,7 +362,7 @@ export default function TimeEntries() {
                       <FormItem>
                         <FormLabel>Data</FormLabel>
                         <FormControl>
-                          <Input {...field} type="date" />
+                          <Input {...field} type="date" tabIndex={1} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -254,7 +376,7 @@ export default function TimeEntries() {
                         <FormLabel>Consultor</FormLabel>
                         <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger tabIndex={2}>
                               <SelectValue placeholder="Selecione um consultor" />
                             </SelectTrigger>
                           </FormControl>
@@ -279,7 +401,7 @@ export default function TimeEntries() {
                       <FormLabel>Cliente</FormLabel>
                       <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger tabIndex={3}>
                             <SelectValue placeholder="Selecione um cliente" />
                           </SelectTrigger>
                         </FormControl>
@@ -307,7 +429,7 @@ export default function TimeEntries() {
                         disabled={!watchedClientId}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger tabIndex={4}>
                             <SelectValue placeholder="Selecione um serviço" />
                           </SelectTrigger>
                         </FormControl>
@@ -554,13 +676,29 @@ export default function TimeEntries() {
                         )}
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold text-green-600">
+                        <p className="text-sm font-semibold text-green-600 mb-2">
                           {formatCurrency(parseFloat(entry.totalValue))}
                         </p>
-                        <Button variant="ghost" size="sm" className="text-primary hover:text-blue-700 text-xs mt-1">
-                          <Edit className="h-3 w-3 mr-1" />
-                          Editar
-                        </Button>
+                        <div className="flex flex-col gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-primary hover:text-blue-700 text-xs"
+                            onClick={() => handleEdit(entry)}
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Editar
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-600 hover:text-red-700 text-xs"
+                            onClick={() => handleDelete(entry.id)}
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Excluir
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
