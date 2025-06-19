@@ -14,6 +14,8 @@ import {
   type ServiceWithClient,
   type TimeEntryDetailed
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, gte, lte, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Clients
@@ -457,4 +459,361 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  // Clients
+  async getClients(): Promise<Client[]> {
+    return await db.select().from(clients);
+  }
+
+  async getClient(id: number): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(eq(clients.id, id));
+    return client || undefined;
+  }
+
+  async getClientByCode(code: string): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(eq(clients.code, code));
+    return client || undefined;
+  }
+
+  async createClient(insertClient: InsertClient): Promise<Client> {
+    const [client] = await db.insert(clients).values(insertClient).returning();
+    return client;
+  }
+
+  async updateClient(id: number, updateData: Partial<InsertClient>): Promise<Client | undefined> {
+    const [client] = await db.update(clients).set(updateData).where(eq(clients.id, id)).returning();
+    return client || undefined;
+  }
+
+  async deleteClient(id: number): Promise<boolean> {
+    const result = await db.delete(clients).where(eq(clients.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Consultants
+  async getConsultants(): Promise<Consultant[]> {
+    return await db.select().from(consultants);
+  }
+
+  async getConsultant(id: number): Promise<Consultant | undefined> {
+    const [consultant] = await db.select().from(consultants).where(eq(consultants.id, id));
+    return consultant || undefined;
+  }
+
+  async getConsultantByCode(code: string): Promise<Consultant | undefined> {
+    const [consultant] = await db.select().from(consultants).where(eq(consultants.code, code));
+    return consultant || undefined;
+  }
+
+  async createConsultant(insertConsultant: InsertConsultant): Promise<Consultant> {
+    const [consultant] = await db.insert(consultants).values(insertConsultant).returning();
+    return consultant;
+  }
+
+  async updateConsultant(id: number, updateData: Partial<InsertConsultant>): Promise<Consultant | undefined> {
+    const [consultant] = await db.update(consultants).set(updateData).where(eq(consultants.id, id)).returning();
+    return consultant || undefined;
+  }
+
+  async deleteConsultant(id: number): Promise<boolean> {
+    const result = await db.delete(consultants).where(eq(consultants.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Services
+  async getServices(): Promise<ServiceWithClient[]> {
+    const result = await db.select().from(services).leftJoin(clients, eq(services.clientId, clients.id));
+    return result.map((row) => ({
+      ...row.services,
+      client: row.clients!,
+    }));
+  }
+
+  async getService(id: number): Promise<Service | undefined> {
+    const [service] = await db.select().from(services).where(eq(services.id, id));
+    return service || undefined;
+  }
+
+  async getServicesByClient(clientId: number): Promise<Service[]> {
+    return await db.select().from(services).where(eq(services.clientId, clientId));
+  }
+
+  async createService(insertService: InsertService): Promise<Service> {
+    const serviceData = {
+      code: insertService.code,
+      clientId: insertService.clientId,
+      description: insertService.description,
+      hourlyRate: insertService.hourlyRate.toString()
+    };
+    const [service] = await db.insert(services).values(serviceData).returning();
+    return service;
+  }
+
+  async updateService(id: number, updateData: Partial<InsertService>): Promise<Service | undefined> {
+    const serviceData: any = {};
+    if (updateData.code !== undefined) serviceData.code = updateData.code;
+    if (updateData.clientId !== undefined) serviceData.clientId = updateData.clientId;
+    if (updateData.description !== undefined) serviceData.description = updateData.description;
+    if (updateData.hourlyRate !== undefined) serviceData.hourlyRate = updateData.hourlyRate.toString();
+    
+    const [service] = await db.update(services).set(serviceData).where(eq(services.id, id)).returning();
+    return service || undefined;
+  }
+
+  async deleteService(id: number): Promise<boolean> {
+    const result = await db.delete(services).where(eq(services.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Time Entries
+  async getTimeEntries(): Promise<TimeEntryDetailed[]> {
+    const result = await db
+      .select()
+      .from(timeEntries)
+      .leftJoin(consultants, eq(timeEntries.consultantId, consultants.id))
+      .leftJoin(clients, eq(timeEntries.clientId, clients.id))
+      .leftJoin(services, eq(timeEntries.serviceId, services.id));
+
+    return result.map((row) => ({
+      ...row.time_entries,
+      consultant: row.consultants!,
+      client: row.clients!,
+      service: row.services!,
+    }));
+  }
+
+  async getTimeEntry(id: number): Promise<TimeEntry | undefined> {
+    const [timeEntry] = await db.select().from(timeEntries).where(eq(timeEntries.id, id));
+    return timeEntry || undefined;
+  }
+
+  async getTimeEntriesByDateRange(startDate: string, endDate: string): Promise<TimeEntryDetailed[]> {
+    const result = await db
+      .select()
+      .from(timeEntries)
+      .leftJoin(consultants, eq(timeEntries.consultantId, consultants.id))
+      .leftJoin(clients, eq(timeEntries.clientId, clients.id))
+      .leftJoin(services, eq(timeEntries.serviceId, services.id))
+      .where(and(gte(timeEntries.date, startDate), lte(timeEntries.date, endDate)));
+
+    return result.map((row) => ({
+      ...row.time_entries,
+      consultant: row.consultants!,
+      client: row.clients!,
+      service: row.services!,
+    }));
+  }
+
+  async getTimeEntriesByClient(clientId: number): Promise<TimeEntryDetailed[]> {
+    const result = await db
+      .select()
+      .from(timeEntries)
+      .leftJoin(consultants, eq(timeEntries.consultantId, consultants.id))
+      .leftJoin(clients, eq(timeEntries.clientId, clients.id))
+      .leftJoin(services, eq(timeEntries.serviceId, services.id))
+      .where(eq(timeEntries.clientId, clientId));
+
+    return result.map((row) => ({
+      ...row.time_entries,
+      consultant: row.consultants!,
+      client: row.clients!,
+      service: row.services!,
+    }));
+  }
+
+  async getTimeEntriesByConsultant(consultantId: number): Promise<TimeEntryDetailed[]> {
+    const result = await db
+      .select()
+      .from(timeEntries)
+      .leftJoin(consultants, eq(timeEntries.consultantId, consultants.id))
+      .leftJoin(clients, eq(timeEntries.clientId, clients.id))
+      .leftJoin(services, eq(timeEntries.serviceId, services.id))
+      .where(eq(timeEntries.consultantId, consultantId));
+
+    return result.map((row) => ({
+      ...row.time_entries,
+      consultant: row.consultants!,
+      client: row.clients!,
+      service: row.services!,
+    }));
+  }
+
+  async createTimeEntry(insertTimeEntry: InsertTimeEntry): Promise<TimeEntry> {
+    // Calculate hours and value
+    const service = await this.getService(insertTimeEntry.serviceId);
+    if (!service) {
+      throw new Error("Service not found");
+    }
+
+    const totalHours = this.calculateHours(
+      insertTimeEntry.startTime,
+      insertTimeEntry.endTime,
+      insertTimeEntry.breakStartTime,
+      insertTimeEntry.breakEndTime
+    );
+
+    const totalValue = totalHours * parseFloat(service.hourlyRate);
+
+    const timeEntryWithCalc = {
+      ...insertTimeEntry,
+      totalHours: totalHours.toString(),
+      totalValue: totalValue.toString(),
+    };
+
+    const [timeEntry] = await db.insert(timeEntries).values(timeEntryWithCalc).returning();
+    return timeEntry;
+  }
+
+  async updateTimeEntry(id: number, updateData: Partial<InsertTimeEntry>): Promise<TimeEntry | undefined> {
+    // If time-related fields are updated, recalculate
+    if (updateData.startTime || updateData.endTime || updateData.breakStartTime || updateData.breakEndTime || updateData.serviceId) {
+      const existing = await this.getTimeEntry(id);
+      if (!existing) return undefined;
+
+      const serviceId = updateData.serviceId || existing.serviceId;
+      const service = await this.getService(serviceId);
+      if (!service) throw new Error("Service not found");
+
+      const startTime = updateData.startTime || existing.startTime;
+      const endTime = updateData.endTime || existing.endTime;
+      const breakStartTime = updateData.breakStartTime || existing.breakStartTime;
+      const breakEndTime = updateData.breakEndTime || existing.breakEndTime;
+
+      const totalHours = this.calculateHours(startTime, endTime, breakStartTime, breakEndTime);
+      const totalValue = totalHours * parseFloat(service.hourlyRate);
+
+      const updatedData: any = {
+        ...updateData,
+        totalHours: totalHours.toString(),
+        totalValue: totalValue.toString()
+      };
+
+      const [timeEntry] = await db.update(timeEntries).set(updatedData).where(eq(timeEntries.id, id)).returning();
+      return timeEntry || undefined;
+    }
+
+    const [timeEntry] = await db.update(timeEntries).set(updateData).where(eq(timeEntries.id, id)).returning();
+    return timeEntry || undefined;
+  }
+
+  async deleteTimeEntry(id: number): Promise<boolean> {
+    const result = await db.delete(timeEntries).where(eq(timeEntries.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  private calculateHours(startTime: string, endTime: string, breakStartTime?: string | null, breakEndTime?: string | null): number {
+    const start = this.timeToMinutes(startTime);
+    const end = this.timeToMinutes(endTime);
+    let workMinutes = end - start;
+
+    if (breakStartTime && breakEndTime) {
+      const breakStart = this.timeToMinutes(breakStartTime);
+      const breakEnd = this.timeToMinutes(breakEndTime);
+      workMinutes -= (breakEnd - breakStart);
+    }
+
+    return workMinutes / 60;
+  }
+
+  private timeToMinutes(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  }
+
+  // Dashboard stats
+  async getDashboardStats(): Promise<{
+    totalClients: number;
+    monthlyHours: number;
+    monthlyRevenue: number;
+    activeConsultants: number;
+  }> {
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    
+    const [clientsCount] = await db.select({ count: sql<number>`count(*)` }).from(clients);
+    const [consultantsCount] = await db.select({ count: sql<number>`count(*)` }).from(consultants);
+    
+    const monthlyEntries = await db
+      .select({
+        totalHours: sql<number>`sum(${timeEntries.totalHours})`,
+        totalValue: sql<number>`sum(${timeEntries.totalValue})`
+      })
+      .from(timeEntries)
+      .where(sql`${timeEntries.date} >= ${currentMonth + '-01'} AND ${timeEntries.date} < ${currentMonth + '-32'}`);
+
+    return {
+      totalClients: clientsCount.count,
+      monthlyHours: monthlyEntries[0]?.totalHours || 0,
+      monthlyRevenue: monthlyEntries[0]?.totalValue || 0,
+      activeConsultants: consultantsCount.count,
+    };
+  }
+
+  // Reports
+  async getReportData(filters: {
+    startDate?: string;
+    endDate?: string;
+    clientId?: number;
+    consultantId?: number;
+  }): Promise<{
+    totalHours: number;
+    totalValue: number;
+    totalEntries: number;
+    totalClients: number;
+    clientBreakdown: Array<{
+      clientId: number;
+      clientName: string;
+      hours: number;
+      value: number;
+      entries: number;
+    }>;
+  }> {
+    const conditions = [];
+    if (filters.startDate) conditions.push(gte(timeEntries.date, filters.startDate));
+    if (filters.endDate) conditions.push(lte(timeEntries.date, filters.endDate));
+    if (filters.clientId) conditions.push(eq(timeEntries.clientId, filters.clientId));
+    if (filters.consultantId) conditions.push(eq(timeEntries.consultantId, filters.consultantId));
+    
+    let entries;
+    const baseQuery = db.select().from(timeEntries).leftJoin(clients, eq(timeEntries.clientId, clients.id));
+    
+    if (conditions.length > 0) {
+      entries = await baseQuery.where(and(...conditions));
+    } else {
+      entries = await baseQuery;
+    }
+    
+    const totalHours = entries.reduce((sum, entry) => sum + parseFloat(entry.time_entries.totalHours), 0);
+    const totalValue = entries.reduce((sum, entry) => sum + parseFloat(entry.time_entries.totalValue), 0);
+    const totalEntries = entries.length;
+    
+    const uniqueClients = new Set(entries.map(entry => entry.time_entries.clientId));
+    const totalClients = uniqueClients.size;
+    
+    const clientBreakdown = Array.from(uniqueClients).map(clientId => {
+      const clientEntries = entries.filter(entry => entry.time_entries.clientId === clientId);
+      const clientName = clientEntries[0]?.clients?.name || 'Unknown';
+      const hours = clientEntries.reduce((sum, entry) => sum + parseFloat(entry.time_entries.totalHours), 0);
+      const value = clientEntries.reduce((sum, entry) => sum + parseFloat(entry.time_entries.totalValue), 0);
+      
+      return {
+        clientId,
+        clientName,
+        hours,
+        value,
+        entries: clientEntries.length,
+      };
+    });
+
+    clientBreakdown.sort((a, b) => b.value - a.value);
+    
+    return {
+      totalHours,
+      totalValue,
+      totalEntries,
+      totalClients,
+      clientBreakdown
+    };
+  }
+}
+
+export const storage = new DatabaseStorage();

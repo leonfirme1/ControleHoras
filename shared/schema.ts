@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, decimal, timestamp } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -96,3 +97,36 @@ export type TimeEntryDetailed = TimeEntry & {
   client: Client;
   service: Service;
 };
+
+// Relations
+export const clientsRelations = relations(clients, ({ many }) => ({
+  services: many(services),
+  timeEntries: many(timeEntries),
+}));
+
+export const consultantsRelations = relations(consultants, ({ many }) => ({
+  timeEntries: many(timeEntries),
+}));
+
+export const servicesRelations = relations(services, ({ one, many }) => ({
+  client: one(clients, {
+    fields: [services.clientId],
+    references: [clients.id],
+  }),
+  timeEntries: many(timeEntries),
+}));
+
+export const timeEntriesRelations = relations(timeEntries, ({ one }) => ({
+  consultant: one(consultants, {
+    fields: [timeEntries.consultantId],
+    references: [consultants.id],
+  }),
+  client: one(clients, {
+    fields: [timeEntries.clientId],
+    references: [clients.id],
+  }),
+  service: one(services, {
+    fields: [timeEntries.serviceId],
+    references: [services.id],
+  }),
+}));
