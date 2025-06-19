@@ -31,34 +31,51 @@ export const useAuth = () => useContext(AuthContext);
 
 function Router() {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
     const storedUser = localStorage.getItem("auth_user");
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        console.log("User loaded from storage:", parsedUser);
       } catch (error) {
         localStorage.removeItem("auth_user");
       }
     }
+    setIsLoading(false);
   }, []);
 
   const handleLoginSuccess = (consultant: AuthUser) => {
+    console.log("Login success, setting user:", consultant);
     setUser(consultant);
     localStorage.setItem("auth_user", JSON.stringify(consultant));
-    // Force navigation to dashboard after successful login
-    setLocation("/");
+    
+    // Force a re-render and navigation
+    setTimeout(() => {
+      console.log("Redirecting to dashboard");
+      setLocation("/");
+      window.location.reload(); // Force full reload if needed
+    }, 100);
   };
 
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem("auth_user");
+    setLocation("/");
   };
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
 
   if (!user) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
+
+  console.log("Rendering dashboard for user:", user);
 
   return (
     <AuthContext.Provider value={{ user, logout: handleLogout }}>
