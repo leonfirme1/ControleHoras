@@ -29,12 +29,19 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     setIsLoading(true);
     try {
       const response: any = await apiRequest("POST", "/api/login", data);
-      toast({
-        title: "Sucesso",
-        description: "Login realizado com sucesso",
-      });
-      onLoginSuccess(response.consultant);
+      console.log("Login response:", response);
+      
+      if (response && response.consultant) {
+        toast({
+          title: "Sucesso",
+          description: "Login realizado com sucesso",
+        });
+        onLoginSuccess(response.consultant);
+      } else {
+        throw new Error("Resposta inválida do servidor");
+      }
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         title: "Erro",
         description: error.message || "Código ou senha inválidos",
