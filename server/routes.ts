@@ -5,6 +5,7 @@ import {
   insertClientSchema, 
   insertConsultantSchema, 
   insertServiceSchema, 
+  insertSectorSchema,
   insertTimeEntrySchema,
   loginSchema 
 } from "@shared/schema";
@@ -236,6 +237,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete service" });
+    }
+  });
+
+  // Sectors routes
+  app.get("/api/sectors", async (req, res) => {
+    try {
+      const sectors = await storage.getSectors();
+      res.json(sectors);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch sectors" });
+    }
+  });
+
+  app.get("/api/sectors/by-client/:clientId", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      const sectors = await storage.getSectorsByClient(clientId);
+      res.json(sectors);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch sectors by client" });
+    }
+  });
+
+  app.post("/api/sectors", async (req, res) => {
+    try {
+      const validatedData = insertSectorSchema.parse(req.body);
+      const sector = await storage.createSector(validatedData);
+      res.status(201).json(sector);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create sector" });
+      }
+    }
+  });
+
+  app.put("/api/sectors/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertSectorSchema.partial().parse(req.body);
+      
+      const sector = await storage.updateSector(id, validatedData);
+      if (!sector) {
+        return res.status(404).json({ message: "Sector not found" });
+      }
+      res.json(sector);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update sector" });
+      }
+    }
+  });
+
+  app.delete("/api/sectors/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteSector(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Sector not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete sector" });
     }
   });
 

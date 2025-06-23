@@ -9,6 +9,7 @@ import Dashboard from "@/pages/dashboard";
 import Clients from "@/pages/clients";
 import Services from "@/pages/services";
 import Consultants from "@/pages/consultants";
+import Sectors from "@/pages/sectors";
 import TimeEntries from "@/pages/time-entries";
 import Activities from "@/pages/activities";
 import Reports from "@/pages/reports";
@@ -89,6 +90,7 @@ function Router() {
         <Route path="/clients" component={Clients} />
         <Route path="/services" component={Services} />
         <Route path="/consultants" component={Consultants} />
+        <Route path="/sectors" component={Sectors} />
         <Route path="/time-entries" component={TimeEntries} />
         <Route path="/activities" component={Activities} />
         <Route path="/reports" component={Reports} />

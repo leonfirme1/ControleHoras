@@ -2,16 +2,20 @@ import {
   clients, 
   consultants, 
   services, 
+  sectors,
   timeEntries,
   type Client, 
   type Consultant, 
   type Service, 
+  type Sector,
   type TimeEntry,
   type InsertClient, 
   type InsertConsultant, 
   type InsertService, 
+  type InsertSector,
   type InsertTimeEntry,
   type ServiceWithClient,
+  type SectorWithClient,
   type TimeEntryDetailed,
   type LoginData
 } from "@shared/schema";
@@ -46,6 +50,14 @@ export interface IStorage {
   createService(service: InsertService): Promise<Service>;
   updateService(id: number, service: Partial<InsertService>): Promise<Service | undefined>;
   deleteService(id: number): Promise<boolean>;
+
+  // Sectors
+  getSectors(): Promise<SectorWithClient[]>;
+  getSector(id: number): Promise<Sector | undefined>;
+  getSectorsByClient(clientId: number): Promise<Sector[]>;
+  createSector(sector: InsertSector): Promise<Sector>;
+  updateSector(id: number, sector: Partial<InsertSector>): Promise<Sector | undefined>;
+  deleteSector(id: number): Promise<boolean>;
 
   // Time Entries
   getTimeEntries(): Promise<TimeEntryDetailed[]>;
@@ -102,20 +114,24 @@ export class MemStorage implements IStorage {
   private clients: Map<number, Client>;
   private consultants: Map<number, Consultant>;
   private services: Map<number, Service>;
+  private sectors: Map<number, Sector>;
   private timeEntries: Map<number, TimeEntry>;
   private currentClientId: number;
   private currentConsultantId: number;
   private currentServiceId: number;
+  private currentSectorId: number;
   private currentTimeEntryId: number;
 
   constructor() {
     this.clients = new Map();
     this.consultants = new Map();
     this.services = new Map();
+    this.sectors = new Map();
     this.timeEntries = new Map();
     this.currentClientId = 1;
     this.currentConsultantId = 1;
     this.currentServiceId = 1;
+    this.currentSectorId = 1;
     this.currentTimeEntryId = 1;
   }
 
@@ -234,6 +250,52 @@ export class MemStorage implements IStorage {
 
   async deleteService(id: number): Promise<boolean> {
     return this.services.delete(id);
+  }
+
+  // Sectors
+  async getSectors(): Promise<SectorWithClient[]> {
+    const sectorsList = Array.from(this.sectors.values());
+    const sectorsWithClients: SectorWithClient[] = [];
+    
+    for (const sector of sectorsList) {
+      const client = sector.clientId ? this.clients.get(sector.clientId) || null : null;
+      sectorsWithClients.push({ ...sector, client });
+    }
+    
+    return sectorsWithClients;
+  }
+
+  async getSector(id: number): Promise<Sector | undefined> {
+    return this.sectors.get(id);
+  }
+
+  async getSectorsByClient(clientId: number): Promise<Sector[]> {
+    return Array.from(this.sectors.values()).filter(sector => sector.clientId === clientId);
+  }
+
+  async createSector(insertSector: InsertSector): Promise<Sector> {
+    const id = this.currentSectorId++;
+    const sector: Sector = { 
+      id,
+      code: insertSector.code,
+      description: insertSector.description,
+      clientId: insertSector.clientId ?? null
+    };
+    this.sectors.set(id, sector);
+    return sector;
+  }
+
+  async updateSector(id: number, updateData: Partial<InsertSector>): Promise<Sector | undefined> {
+    const sector = this.sectors.get(id);
+    if (!sector) return undefined;
+    
+    const updatedSector = { ...sector, ...updateData };
+    this.sectors.set(id, updatedSector);
+    return updatedSector;
+  }
+
+  async deleteSector(id: number): Promise<boolean> {
+    return this.sectors.delete(id);
   }
 
   // Time Entries
@@ -677,6 +739,43 @@ export class DatabaseStorage implements IStorage {
 
   async deleteService(id: number): Promise<boolean> {
     const result = await db.delete(services).where(eq(services.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Sectors
+  async getSectors(): Promise<SectorWithClient[]> {
+    const result = await db
+      .select()
+      .from(sectors)
+      .leftJoin(clients, eq(sectors.clientId, clients.id));
+
+    return result.map((row) => ({
+      ...row.sectors,
+      client: row.clients || null,
+    }));
+  }
+
+  async getSector(id: number): Promise<Sector | undefined> {
+    const [sector] = await db.select().from(sectors).where(eq(sectors.id, id));
+    return sector || undefined;
+  }
+
+  async getSectorsByClient(clientId: number): Promise<Sector[]> {
+    return await db.select().from(sectors).where(eq(sectors.clientId, clientId));
+  }
+
+  async createSector(insertSector: InsertSector): Promise<Sector> {
+    const [sector] = await db.insert(sectors).values(insertSector).returning();
+    return sector;
+  }
+
+  async updateSector(id: number, updateData: Partial<InsertSector>): Promise<Sector | undefined> {
+    const [sector] = await db.update(sectors).set(updateData).where(eq(sectors.id, id)).returning();
+    return sector || undefined;
+  }
+
+  async deleteSector(id: number): Promise<boolean> {
+    const result = await db.delete(sectors).where(eq(sectors.id, id));
     return (result.rowCount ?? 0) > 0;
   }
 

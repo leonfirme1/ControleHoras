@@ -26,6 +26,13 @@ export const services = pgTable("services", {
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }).notNull(),
 });
 
+export const sectors = pgTable("sectors", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  clientId: integer("client_id").references(() => clients.id), // nullable - can exist without client
+  description: text("description").notNull(),
+});
+
 export const timeEntries = pgTable("time_entries", {
   id: serial("id").primaryKey(),
   date: text("date").notNull(), // YYYY-MM-DD format
@@ -77,6 +84,10 @@ export const insertServiceFormSchema = z.object({
   hourlyRate: z.string().min(1, "Valor por hora é obrigatório"),
 });
 
+export const insertSectorSchema = createInsertSchema(sectors).omit({
+  id: true,
+});
+
 export const insertTimeEntrySchema = createInsertSchema(timeEntries).omit({
   id: true,
   totalHours: true,
@@ -95,11 +106,15 @@ export type InsertService = z.infer<typeof insertServiceSchema>;
 export type InsertServiceForm = z.infer<typeof insertServiceFormSchema>;
 export type Service = typeof services.$inferSelect;
 
+export type InsertSector = z.infer<typeof insertSectorSchema>;
+export type Sector = typeof sectors.$inferSelect;
+
 export type InsertTimeEntry = z.infer<typeof insertTimeEntrySchema>;
 export type TimeEntry = typeof timeEntries.$inferSelect;
 
 // Extended types for joined data
 export type ServiceWithClient = Service & { client: Client };
+export type SectorWithClient = Sector & { client: Client | null };
 export type TimeEntryDetailed = TimeEntry & {
   consultant: Consultant;
   client: Client;
@@ -109,6 +124,7 @@ export type TimeEntryDetailed = TimeEntry & {
 // Relations
 export const clientsRelations = relations(clients, ({ many }) => ({
   services: many(services),
+  sectors: many(sectors),
   timeEntries: many(timeEntries),
 }));
 
@@ -122,6 +138,13 @@ export const servicesRelations = relations(services, ({ one, many }) => ({
     references: [clients.id],
   }),
   timeEntries: many(timeEntries),
+}));
+
+export const sectorsRelations = relations(sectors, ({ one }) => ({
+  client: one(clients, {
+    fields: [sectors.clientId],
+    references: [clients.id],
+  }),
 }));
 
 export const timeEntriesRelations = relations(timeEntries, ({ one }) => ({
