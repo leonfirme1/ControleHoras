@@ -202,9 +202,12 @@ export default function TimeEntries() {
         });
     }
     
+    // Ensure date is in correct format (YYYY-MM-DD) to avoid timezone issues
+    const correctDate = entry.date.includes('T') ? entry.date.split('T')[0] : entry.date;
+    
     // Reset form with all data, ensuring date is properly set
     const formData = {
-      date: entry.date,
+      date: correctDate,
       consultantId: entry.consultantId,
       clientId: entry.clientId,
       serviceId: entry.serviceId,
@@ -224,9 +227,9 @@ export default function TimeEntries() {
     // Force reset and then set values individually to ensure all fields are updated
     form.reset(formData);
     
-    // Explicitly set the date field to ensure it's loaded
+    // Explicitly set the date field to ensure it's loaded with correct format
     setTimeout(() => {
-      form.setValue('date', entry.date);
+      form.setValue('date', correctDate);
       form.setValue('consultantId', entry.consultantId);
       form.setValue('clientId', entry.clientId);
       form.setValue('serviceId', entry.serviceId);
