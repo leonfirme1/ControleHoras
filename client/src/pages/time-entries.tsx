@@ -188,6 +188,11 @@ export default function TimeEntries() {
 
   // Function to load entry for editing
   const handleEdit = (entry: TimeEntryDetailed) => {
+    // Debug: log the entry date to understand the format
+    console.log('Received entry date:', entry.date);
+    console.log('Date type:', typeof entry.date);
+    console.log('Entry object:', entry);
+    
     setEditingEntry(entry);
     
     // Load client services first if we have the client
@@ -204,6 +209,7 @@ export default function TimeEntries() {
     
     // Ensure date is in correct format (YYYY-MM-DD) to avoid timezone issues
     const correctDate = entry.date.includes('T') ? entry.date.split('T')[0] : entry.date;
+    console.log('Corrected date:', correctDate);
     
     // Reset form with all data, ensuring date is properly set
     const formData = {

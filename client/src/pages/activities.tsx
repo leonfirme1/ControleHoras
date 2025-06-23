@@ -95,6 +95,10 @@ export default function Activities() {
   ) || { hours: 0, value: 0 };
 
   const handleEdit = (activity: TimeEntryDetailed) => {
+    // Debug: log the activity date to understand the format
+    console.log('Original activity date:', activity.date);
+    console.log('Activity object:', activity);
+    
     // Store the activity data in localStorage for the time-entries page
     localStorage.setItem('editingActivity', JSON.stringify(activity));
     // Navigate to time-entries page
