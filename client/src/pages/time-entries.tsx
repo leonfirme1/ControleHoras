@@ -83,10 +83,13 @@ export default function TimeEntries() {
   // Check for editing activity from Activities page
   useEffect(() => {
     const editingActivityData = localStorage.getItem('editingActivity');
-    if (editingActivityData) {
+    if (editingActivityData && consultants && clients) {
       try {
         const activity = JSON.parse(editingActivityData);
-        handleEdit(activity);
+        // Ensure we have all the necessary data before loading
+        setTimeout(() => {
+          handleEdit(activity);
+        }, 100);
         // Clear the localStorage after loading
         localStorage.removeItem('editingActivity');
       } catch (error) {
@@ -186,7 +189,21 @@ export default function TimeEntries() {
   // Function to load entry for editing
   const handleEdit = (entry: TimeEntryDetailed) => {
     setEditingEntry(entry);
-    form.reset({
+    
+    // Load client services first if we have the client
+    if (entry.clientId) {
+      fetch(`/api/services/by-client/${entry.clientId}`)
+        .then(res => res.json())
+        .then(services => {
+          setClientServices(services);
+        })
+        .catch(() => {
+          setClientServices([]);
+        });
+    }
+    
+    // Reset form with all data, ensuring date is properly set
+    const formData = {
       date: entry.date,
       consultantId: entry.consultantId,
       clientId: entry.clientId,
@@ -202,9 +219,23 @@ export default function TimeEntries() {
       actualDelivery: entry.actualDelivery || "",
       project: entry.project || "",
       serviceLocation: entry.serviceLocation || "",
-    });
+    };
     
-    // Load the client's services and set calculated values
+    // Force reset and then set values individually to ensure all fields are updated
+    form.reset(formData);
+    
+    // Explicitly set the date field to ensure it's loaded
+    setTimeout(() => {
+      form.setValue('date', entry.date);
+      form.setValue('consultantId', entry.consultantId);
+      form.setValue('clientId', entry.clientId);
+      form.setValue('serviceId', entry.serviceId);
+      if (entry.sectorId) {
+        form.setValue('sectorId', entry.sectorId);
+      }
+    }, 50);
+    
+    // Set calculated values
     if (entry.service) {
       setSelectedService(entry.service);
       const hours = parseFloat(entry.totalHours);
