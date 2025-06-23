@@ -387,6 +387,7 @@ export class MemStorage implements IStorage {
       consultantId: insertTimeEntry.consultantId,
       clientId: insertTimeEntry.clientId,
       serviceId: insertTimeEntry.serviceId,
+      sectorId: insertTimeEntry.sectorId || null,
       startTime: insertTimeEntry.startTime,
       endTime: insertTimeEntry.endTime,
       description: insertTimeEntry.description || null,

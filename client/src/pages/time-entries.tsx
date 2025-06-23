@@ -14,10 +14,11 @@ import {
   type InsertTimeEntry, 
   type Client, 
   type Consultant, 
-  type Service 
+  type Service,
+  type Sector 
 } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Save, Edit, Trash2 } from "lucide-react";
+import { Save, Edit, Trash2, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/App";
 
@@ -27,6 +28,7 @@ export default function TimeEntries() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [clientServices, setClientServices] = useState<Service[]>([]);
   const [editingEntry, setEditingEntry] = useState<TimeEntryDetailed | null>(null);
+  const [showFinancialValues, setShowFinancialValues] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -42,6 +44,10 @@ export default function TimeEntries() {
     queryKey: ["/api/consultants"],
   });
 
+  const { data: sectors, isLoading: sectorsLoading } = useQuery<Sector[]>({
+    queryKey: ["/api/sectors"],
+  });
+
   // Find the current user's consultant ID
   const currentConsultant = consultants?.find(c => c.id === user?.id);
   const defaultConsultantId = currentConsultant?.id || 0;
@@ -53,10 +59,11 @@ export default function TimeEntries() {
       consultantId: defaultConsultantId,
       clientId: 0,
       serviceId: 0,
-      startTime: "",
-      endTime: "",
-      breakStartTime: "",
-      breakEndTime: "",
+      sectorId: null,
+      startTime: "00:00",
+      endTime: "00:00",
+      breakStartTime: "00:00",
+      breakEndTime: "00:00",
       description: "",
       activityCompleted: "",
       deliveryForecast: "",
@@ -157,10 +164,11 @@ export default function TimeEntries() {
       consultantId: defaultConsultantId,
       clientId: 0,
       serviceId: 0,
-      startTime: "",
-      endTime: "",
-      breakStartTime: "",
-      breakEndTime: "",
+      sectorId: null,
+      startTime: "00:00",
+      endTime: "00:00",
+      breakStartTime: "00:00",
+      breakEndTime: "00:00",
       description: "",
       activityCompleted: "",
       deliveryForecast: "",
@@ -183,10 +191,11 @@ export default function TimeEntries() {
       consultantId: entry.consultantId,
       clientId: entry.clientId,
       serviceId: entry.serviceId,
+      sectorId: entry.sectorId || null,
       startTime: entry.startTime,
       endTime: entry.endTime,
-      breakStartTime: entry.breakStartTime || "",
-      breakEndTime: entry.breakEndTime || "",
+      breakStartTime: entry.breakStartTime || "00:00",
+      breakEndTime: entry.breakEndTime || "00:00",
       description: entry.description || "",
       activityCompleted: entry.activityCompleted || "",
       deliveryForecast: entry.deliveryForecast || "",
@@ -319,7 +328,7 @@ export default function TimeEntries() {
     return name.split(' ').map(word => word.charAt(0)).join('').substring(0, 2).toUpperCase();
   };
 
-  if (entriesLoading || clientsLoading || consultantsLoading) {
+  if (entriesLoading || clientsLoading || consultantsLoading || sectorsLoading) {
     return (
       <Layout title="Lançamento de Horas">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -352,20 +361,34 @@ export default function TimeEntries() {
         {/* Form for new time entry */}
         <div className="content-card">
           <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800">
-              {editingEntry ? "Editar Lançamento de Horas" : "Novo Lançamento de Horas"}
-            </h3>
-            {editingEntry && (
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {editingEntry ? "Editar Lançamento de Horas" : "Novo Lançamento de Horas"}
+                </h3>
+                {editingEntry && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={resetForm}
+                    className="mt-2"
+                  >
+                    Cancelar Edição
+                  </Button>
+                )}
+              </div>
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                onClick={resetForm}
-                className="mt-2"
+                onClick={() => setShowFinancialValues(!showFinancialValues)}
+                className="flex items-center gap-2"
               >
-                Cancelar Edição
+                {showFinancialValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showFinancialValues ? "Ocultar Valores" : "Mostrar Valores"}
               </Button>
-            )}
+            </div>
           </div>
           <div className="p-6">
             <Form {...form}>
@@ -461,6 +484,31 @@ export default function TimeEntries() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="sectorId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Setor (opcional)</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value === "none" ? null : parseInt(value))} value={field.value?.toString() || "none"}>
+                        <FormControl>
+                          <SelectTrigger tabIndex={5}>
+                            <SelectValue placeholder="Selecione um setor (opcional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">Sem setor específico</SelectItem>
+                          {sectors?.map((sector) => (
+                            <SelectItem key={sector.id} value={sector.id.toString()}>
+                              {sector.code} - {sector.description}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -469,7 +517,7 @@ export default function TimeEntries() {
                       <FormItem>
                         <FormLabel>Hora Início</FormLabel>
                         <FormControl>
-                          <Input {...field} type="time" />
+                          <Input {...field} type="time" tabIndex={6} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -482,7 +530,7 @@ export default function TimeEntries() {
                       <FormItem>
                         <FormLabel>Hora Fim</FormLabel>
                         <FormControl>
-                          <Input {...field} type="time" />
+                          <Input {...field} type="time" tabIndex={7} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -497,7 +545,7 @@ export default function TimeEntries() {
                       <FormItem>
                         <FormLabel>Intervalo Início (opcional)</FormLabel>
                         <FormControl>
-                          <Input {...field} type="time" value={field.value || ""} />
+                          <Input {...field} type="time" value={field.value || ""} tabIndex={8} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -510,7 +558,7 @@ export default function TimeEntries() {
                       <FormItem>
                         <FormLabel>Intervalo Fim (opcional)</FormLabel>
                         <FormControl>
-                          <Input {...field} type="time" value={field.value || ""} />
+                          <Input {...field} type="time" value={field.value || ""} tabIndex={9} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -628,12 +676,14 @@ export default function TimeEntries() {
                       {formatTime(calculatedHours)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-sm font-medium text-gray-700">Valor Total:</span>
-                    <span className="text-lg font-bold text-green-600">
-                      {formatCurrency(calculatedValue)}
-                    </span>
-                  </div>
+                  {showFinancialValues && (
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-sm font-medium text-gray-700">Valor Total:</span>
+                      <span className="text-lg font-bold text-green-600">
+                        {formatCurrency(calculatedValue)}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <Button 
                   type="submit" 

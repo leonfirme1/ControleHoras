@@ -39,6 +39,7 @@ export const timeEntries = pgTable("time_entries", {
   consultantId: integer("consultant_id").notNull().references(() => consultants.id),
   clientId: integer("client_id").notNull().references(() => clients.id),
   serviceId: integer("service_id").notNull().references(() => services.id),
+  sectorId: integer("sector_id").references(() => sectors.id), // optional sector
   startTime: text("start_time").notNull(), // HH:MM format
   endTime: text("end_time").notNull(), // HH:MM format
   breakStartTime: text("break_start_time"), // HH:MM format
@@ -159,5 +160,9 @@ export const timeEntriesRelations = relations(timeEntries, ({ one }) => ({
   service: one(services, {
     fields: [timeEntries.serviceId],
     references: [services.id],
+  }),
+  sector: one(sectors, {
+    fields: [timeEntries.sectorId],
+    references: [sectors.id],
   }),
 }));
