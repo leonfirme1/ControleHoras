@@ -313,6 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const serviceTypes = await storage.getServiceTypes();
       res.json(serviceTypes);
     } catch (error) {
+      console.error("Error fetching service types:", error);
       res.status(500).json({ message: "Failed to fetch service types" });
     }
   });
@@ -326,6 +327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid data", errors: error.errors });
       } else {
+        console.error("Error creating service type:", error);
         res.status(500).json({ message: "Failed to create service type" });
       }
     }
@@ -379,6 +381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json(timeEntries);
       }
     } catch (error) {
+      console.error("Error fetching time entries:", error);
       res.status(500).json({ message: "Failed to fetch time entries" });
     }
   });
