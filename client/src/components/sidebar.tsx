@@ -60,7 +60,7 @@ export function Sidebar() {
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h1 className="text-xl font-bold text-gray-800 flex items-center">
             <Clock className="text-primary mr-2 h-6 w-6" />
-            <span className="truncate">Menu </span>
+            <span className="truncate text-[18px]">Gestão Horas</span>
           </h1>
           <Button
             variant="ghost"
