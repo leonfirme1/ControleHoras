@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Plus, UserCircle, LogOut } from "lucide-react";
+import { Plus, UserCircle, LogOut, Menu } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/App";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 interface HeaderProps {
   title: string;
@@ -10,6 +11,7 @@ interface HeaderProps {
 export function Header({ title }: HeaderProps) {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
+  const { toggle } = useSidebar();
 
   const handleNewEntry = () => {
     setLocation("/time-entries");
@@ -18,7 +20,18 @@ export function Header({ title }: HeaderProps) {
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-gray-800">{title}</h2>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={toggle}
+            title="Alternar menu"
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+          <h2 className="text-2xl font-semibold text-gray-800">{title}</h2>
+        </div>
         <div className="flex items-center space-x-4">
           <Button onClick={handleNewEntry} className="bg-primary hover:bg-blue-700">
             <Plus className="h-4 w-4 mr-2" />
