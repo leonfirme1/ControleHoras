@@ -43,10 +43,10 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Overlay for mobile */}
+      {/* Overlay for mobile - only close when clicking outside on very small screens */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={close}
         />
       )}
@@ -93,12 +93,6 @@ export function Sidebar() {
                   <Link 
                     href={item.href} 
                     className={`nav-item ${isActive ? 'active' : ''}`}
-                    onClick={() => {
-                      // Close sidebar on mobile when navigating
-                      if (window.innerWidth < 1024) {
-                        close();
-                      }
-                    }}
                   >
                     {Icon ? <Icon className="h-5 w-5 flex-shrink-0" /> : null}
                     <span className="truncate">{item.name}</span>
