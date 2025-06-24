@@ -67,8 +67,9 @@ export function Sidebar() {
           <Button
             variant="ghost"
             size="sm"
-            className="lg:hidden h-8 w-8 p-0"
+            className="h-8 w-8 p-0"
             onClick={close}
+            title="Fechar menu"
           >
             <X className="h-4 w-4" />
           </Button>
