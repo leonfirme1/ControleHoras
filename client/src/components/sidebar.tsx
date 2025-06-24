@@ -11,7 +11,8 @@ import {
   Building,
   HeadphonesIcon,
   LucideIcon,
-  X
+  ChevronLeft,
+  PanelLeftClose
 } from "lucide-react";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ const navigation: NavigationItem[] = [
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { isOpen, close } = useSidebar();
+  const { isOpen, close, toggle } = useSidebar();
 
   return (
     <>
@@ -52,12 +53,10 @@ export function Sidebar() {
       
       {/* Sidebar */}
       <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50
+        fixed inset-y-0 left-0 z-50
         w-64 bg-white shadow-lg
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0
-        ${!isOpen ? 'lg:-translate-x-full' : ''}
       `}>
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h1 className="text-xl font-bold text-gray-800 flex items-center">
@@ -67,11 +66,11 @@ export function Sidebar() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0"
-            onClick={close}
-            title="Fechar menu"
+            className="h-8 w-8 p-0 hover:bg-gray-100"
+            onClick={toggle}
+            title="Ocultar menu lateral"
           >
-            <X className="h-4 w-4" />
+            <PanelLeftClose className="h-4 w-4" />
           </Button>
         </div>
         
