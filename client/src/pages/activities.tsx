@@ -31,19 +31,21 @@ export default function Activities() {
     clientId: 'all',
     consultantId: 'all'
   });
+  
+  const [appliedFilters, setAppliedFilters] = useState(filters);
 
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
   // Fetch filtered activities
-  const { data: activities, isLoading: activitiesLoading } = useQuery<TimeEntryDetailed[]>({
-    queryKey: ["/api/time-entries/filtered", filters],
+  const { data: activities, isLoading: activitiesLoading, refetch } = useQuery<TimeEntryDetailed[]>({
+    queryKey: ["/api/time-entries/filtered", appliedFilters],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters.startDate) params.set('startDate', filters.startDate);
-      if (filters.endDate) params.set('endDate', filters.endDate);
-      if (filters.clientId && filters.clientId !== 'all') params.set('clientId', filters.clientId);
-      if (filters.consultantId && filters.consultantId !== 'all') params.set('consultantId', filters.consultantId);
+      if (appliedFilters.startDate) params.set('startDate', appliedFilters.startDate);
+      if (appliedFilters.endDate) params.set('endDate', appliedFilters.endDate);
+      if (appliedFilters.clientId && appliedFilters.clientId !== 'all') params.set('clientId', appliedFilters.clientId);
+      if (appliedFilters.consultantId && appliedFilters.consultantId !== 'all') params.set('consultantId', appliedFilters.consultantId);
       
       const response = await fetch(`/api/time-entries/filtered?${params.toString()}`, {
         credentials: "include",
@@ -53,7 +55,12 @@ export default function Activities() {
         throw new Error('Failed to fetch activities');
       }
       
-      return response.json();
+      const data = await response.json();
+      
+      // Sort activities by date from newest to oldest
+      return data.sort((a: TimeEntryDetailed, b: TimeEntryDetailed) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
     },
   });
 
@@ -69,7 +76,7 @@ export default function Activities() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/time-entries/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/time-entries/filtered"] });
+      refetch();
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       toast({
         title: "Sucesso",
@@ -111,13 +118,19 @@ export default function Activities() {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  const applyFilters = () => {
+    setAppliedFilters(filters);
+  };
+
   const clearFilters = () => {
-    setFilters({
+    const defaultFilters = {
       startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
       endDate: new Date().toISOString().split('T')[0],
       clientId: 'all',
       consultantId: 'all'
-    });
+    };
+    setFilters(defaultFilters);
+    setAppliedFilters(defaultFilters);
   };
 
   const formatCurrency = (value: number) => {
@@ -216,10 +229,7 @@ export default function Activities() {
             
             <div className="flex gap-2 mt-4">
               <Button 
-                onClick={() => {
-                  // Force refetch when filter button is clicked
-                  queryClient.invalidateQueries({ queryKey: ["/api/time-entries/filtered"] });
-                }}
+                onClick={applyFilters}
                 className="bg-primary text-white hover:bg-primary/90"
               >
                 <Filter className="h-4 w-4 mr-2" />
