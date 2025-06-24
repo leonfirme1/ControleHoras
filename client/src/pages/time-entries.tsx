@@ -15,7 +15,8 @@ import {
   type Client, 
   type Consultant, 
   type Service,
-  type Sector 
+  type Sector,
+  type ServiceType
 } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Save, Edit, Trash2, Eye, EyeOff } from "lucide-react";
@@ -48,6 +49,10 @@ export default function TimeEntries() {
     queryKey: ["/api/sectors"],
   });
 
+  const { data: serviceTypes, isLoading: serviceTypesLoading } = useQuery<ServiceType[]>({
+    queryKey: ["/api/service-types"],
+  });
+
   // Find the current user's consultant ID
   const currentConsultant = consultants?.find(c => c.id === user?.id);
   const defaultConsultantId = currentConsultant?.id || 0;
@@ -60,6 +65,7 @@ export default function TimeEntries() {
       clientId: 0,
       serviceId: 0,
       sectorId: null,
+      serviceTypeId: null,
       startTime: "00:00",
       endTime: "00:00",
       breakStartTime: "00:00",
@@ -362,7 +368,7 @@ export default function TimeEntries() {
     return name.split(' ').map(word => word.charAt(0)).join('').substring(0, 2).toUpperCase();
   };
 
-  if (entriesLoading || clientsLoading || consultantsLoading || sectorsLoading) {
+  if (entriesLoading || clientsLoading || consultantsLoading || sectorsLoading || serviceTypesLoading) {
     return (
       <Layout title="Lançamento de Horas">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -543,6 +549,31 @@ export default function TimeEntries() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="serviceTypeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo Atendimento (opcional)</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value === "none" ? null : parseInt(value))} value={field.value?.toString() || "none"}>
+                        <FormControl>
+                          <SelectTrigger tabIndex={6}>
+                            <SelectValue placeholder="Selecione um tipo de atendimento (opcional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">Sem tipo específico</SelectItem>
+                          {serviceTypes?.map((serviceType) => (
+                            <SelectItem key={serviceType.id} value={serviceType.id.toString()}>
+                              {serviceType.code} - {serviceType.description}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -551,7 +582,7 @@ export default function TimeEntries() {
                       <FormItem>
                         <FormLabel>Hora Início</FormLabel>
                         <FormControl>
-                          <Input {...field} type="time" tabIndex={6} />
+                          <Input {...field} type="time" tabIndex={7} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -564,7 +595,7 @@ export default function TimeEntries() {
                       <FormItem>
                         <FormLabel>Hora Fim</FormLabel>
                         <FormControl>
-                          <Input {...field} type="time" tabIndex={7} />
+                          <Input {...field} type="time" tabIndex={8} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

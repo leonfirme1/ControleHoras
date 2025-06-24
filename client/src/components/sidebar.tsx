@@ -9,6 +9,7 @@ import {
   ChartBar,
   CheckSquare,
   Building,
+  HeadphonesIcon,
   LucideIcon
 } from "lucide-react";
 
@@ -27,6 +28,7 @@ const navigation: NavigationItem[] = [
   { name: "Serviços", href: "/services", icon: Settings },
   { name: "Consultores", href: "/consultants", icon: UserCheck },
   { name: "Setor", href: "/sectors", icon: Building },
+  { name: "Tipo Atendimento", href: "/service-types", icon: HeadphonesIcon },
   { name: "separator", href: "", icon: null },
   { name: "Relatórios", href: "/reports", icon: ChartBar },
 ];

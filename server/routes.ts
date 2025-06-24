@@ -6,6 +6,7 @@ import {
   insertConsultantSchema, 
   insertServiceSchema, 
   insertSectorSchema,
+  insertServiceTypeSchema,
   insertTimeEntrySchema,
   loginSchema 
 } from "@shared/schema";
@@ -303,6 +304,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete sector" });
+    }
+  });
+
+  // Service Types routes
+  app.get("/api/service-types", async (req, res) => {
+    try {
+      const serviceTypes = await storage.getServiceTypes();
+      res.json(serviceTypes);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch service types" });
+    }
+  });
+
+  app.post("/api/service-types", async (req, res) => {
+    try {
+      const validatedData = insertServiceTypeSchema.parse(req.body);
+      const serviceType = await storage.createServiceType(validatedData);
+      res.status(201).json(serviceType);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create service type" });
+      }
+    }
+  });
+
+  app.put("/api/service-types/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertServiceTypeSchema.partial().parse(req.body);
+      
+      const serviceType = await storage.updateServiceType(id, validatedData);
+      if (!serviceType) {
+        return res.status(404).json({ message: "Service type not found" });
+      }
+      res.json(serviceType);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update service type" });
+      }
+    }
+  });
+
+  app.delete("/api/service-types/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteServiceType(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Service type not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete service type" });
     }
   });
 

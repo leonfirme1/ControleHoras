@@ -3,16 +3,19 @@ import {
   consultants, 
   services, 
   sectors,
+  serviceTypes,
   timeEntries,
   type Client, 
   type Consultant, 
   type Service, 
   type Sector,
+  type ServiceType,
   type TimeEntry,
   type InsertClient, 
   type InsertConsultant, 
   type InsertService, 
   type InsertSector,
+  type InsertServiceType,
   type InsertTimeEntry,
   type ServiceWithClient,
   type SectorWithClient,
@@ -58,6 +61,13 @@ export interface IStorage {
   createSector(sector: InsertSector): Promise<Sector>;
   updateSector(id: number, sector: Partial<InsertSector>): Promise<Sector | undefined>;
   deleteSector(id: number): Promise<boolean>;
+
+  // Service Types
+  getServiceTypes(): Promise<ServiceType[]>;
+  getServiceType(id: number): Promise<ServiceType | undefined>;
+  createServiceType(serviceType: InsertServiceType): Promise<ServiceType>;
+  updateServiceType(id: number, serviceType: Partial<InsertServiceType>): Promise<ServiceType | undefined>;
+  deleteServiceType(id: number): Promise<boolean>;
 
   // Time Entries
   getTimeEntries(): Promise<TimeEntryDetailed[]>;
@@ -115,11 +125,13 @@ export class MemStorage implements IStorage {
   private consultants: Map<number, Consultant>;
   private services: Map<number, Service>;
   private sectors: Map<number, Sector>;
+  private serviceTypes: Map<number, ServiceType>;
   private timeEntries: Map<number, TimeEntry>;
   private currentClientId: number;
   private currentConsultantId: number;
   private currentServiceId: number;
   private currentSectorId: number;
+  private currentServiceTypeId: number;
   private currentTimeEntryId: number;
 
   constructor() {
@@ -127,12 +139,17 @@ export class MemStorage implements IStorage {
     this.consultants = new Map();
     this.services = new Map();
     this.sectors = new Map();
+    this.serviceTypes = new Map();
     this.timeEntries = new Map();
     this.currentClientId = 1;
     this.currentConsultantId = 1;
     this.currentServiceId = 1;
     this.currentSectorId = 1;
+    this.currentServiceTypeId = 1;
     this.currentTimeEntryId = 1;
+
+    // Add some sample data
+    this.addSampleData();
   }
 
   // Clients
@@ -298,6 +315,142 @@ export class MemStorage implements IStorage {
     return this.sectors.delete(id);
   }
 
+  // Service Types operations
+  async getServiceTypes(): Promise<ServiceType[]> {
+    return Array.from(this.serviceTypes.values());
+  }
+
+  async getServiceType(id: number): Promise<ServiceType | undefined> {
+    return this.serviceTypes.get(id);
+  }
+
+  async createServiceType(insertServiceType: InsertServiceType): Promise<ServiceType> {
+    const id = this.currentServiceTypeId++;
+    const serviceType: ServiceType = { 
+      id,
+      code: insertServiceType.code,
+      description: insertServiceType.description
+    };
+    this.serviceTypes.set(id, serviceType);
+    return serviceType;
+  }
+
+  async updateServiceType(id: number, updateData: Partial<InsertServiceType>): Promise<ServiceType | undefined> {
+    const serviceType = this.serviceTypes.get(id);
+    if (!serviceType) return undefined;
+    
+    const updatedServiceType = { ...serviceType, ...updateData };
+    this.serviceTypes.set(id, updatedServiceType);
+    return updatedServiceType;
+  }
+
+  async deleteServiceType(id: number): Promise<boolean> {
+    return this.serviceTypes.delete(id);
+  }
+
+  private addSampleData() {
+    // Sample clients
+    this.clients.set(1, { id: 1, code: "CLI001", name: "SkyStoneBrasil", hourlyRate: 142 });
+    this.clients.set(2, { id: 2, code: "CLI002", name: "TechCorp", hourlyRate: 120 });
+    this.clients.set(3, { id: 3, code: "CLI003", name: "InnovaSoft", hourlyRate: 150 });
+    this.clients.set(4, { id: 4, code: "CLI004", name: "DataFlow Solutions", hourlyRate: 135 });
+    this.clients.set(5, { id: 5, code: "CLI005", name: "CloudTech", hourlyRate: 160 });
+    this.currentClientId = 6;
+
+    // Sample consultants
+    this.consultants.set(1, { id: 1, code: "CON001", name: "João Silva", password: "senha123" });
+    this.consultants.set(2, { id: 2, code: "CON002", name: "Maria Santos", password: "senha123" });
+    this.consultants.set(3, { id: 3, code: "LEON", name: "Leon T. Firme", password: "C@sull45" });
+    this.currentConsultantId = 4;
+
+    // Sample services
+    this.services.set(1, { id: 1, code: "DEV001", description: "Desenvolvimento de Sistema ERP", clientId: 1, hourlyRate: 142 });
+    this.services.set(2, { id: 2, code: "CONS001", description: "Consultoria em Processos", clientId: 1, hourlyRate: 142 });
+    this.services.set(3, { id: 3, code: "SUP001", description: "Suporte Técnico", clientId: 2, hourlyRate: 120 });
+    this.currentServiceId = 4;
+
+    // Sample sectors
+    this.sectors.set(1, { id: 1, code: "TI", description: "Tecnologia da Informação", clientId: 1 });
+    this.sectors.set(2, { id: 2, code: "FIN", description: "Financeiro", clientId: 1 });
+    this.sectors.set(3, { id: 3, code: "ADM", description: "Administrativo", clientId: null });
+    this.currentSectorId = 4;
+
+    // Sample service types
+    this.serviceTypes.set(1, { id: 1, code: "CONS", description: "Consultoria" });
+    this.serviceTypes.set(2, { id: 2, code: "IMPL", description: "Implementação" });
+    this.serviceTypes.set(3, { id: 3, code: "SUPT", description: "Suporte Técnico" });
+    this.serviceTypes.set(4, { id: 4, code: "TREI", description: "Treinamento" });
+    this.currentServiceTypeId = 5;
+
+    // Sample time entries
+    this.timeEntries.set(1, {
+      id: 1,
+      date: "2024-12-01",
+      consultantId: 3,
+      clientId: 1,
+      serviceId: 1,
+      sectorId: 1,
+      serviceTypeId: 1,
+      startTime: "08:00",
+      endTime: "17:00",
+      breakStartTime: "12:00",
+      breakEndTime: "13:00",
+      description: "Desenvolvimento de funcionalidades do sistema ERP",
+      activityCompleted: "Implementação completa do módulo de vendas",
+      deliveryForecast: null,
+      actualDelivery: null,
+      project: null,
+      serviceLocation: null,
+      totalHours: "8.00",
+      totalValue: "1136.00"
+    });
+    
+    this.timeEntries.set(2, {
+      id: 2,
+      date: "2024-12-02",
+      consultantId: 3,
+      clientId: 1,
+      serviceId: 2,
+      sectorId: 2,
+      serviceTypeId: 2,
+      startTime: "09:00",
+      endTime: "18:00",
+      breakStartTime: "12:30",
+      breakEndTime: "13:30",
+      description: "Consultoria em processos financeiros",
+      activityCompleted: "Revisão e otimização dos processos de faturamento",
+      deliveryForecast: null,
+      actualDelivery: null,
+      project: null,
+      serviceLocation: null,
+      totalHours: "8.00",
+      totalValue: "1136.00"
+    });
+    
+    this.timeEntries.set(3, {
+      id: 3,
+      date: "2024-12-03",
+      consultantId: 3,
+      clientId: 1,
+      serviceId: 1,
+      sectorId: null,
+      serviceTypeId: 3,
+      startTime: "08:30",
+      endTime: "16:30",
+      breakStartTime: null,
+      breakEndTime: null,
+      description: "Manutenção preventiva do sistema",
+      activityCompleted: "Sistema atualizado e funcionando perfeitamente",
+      deliveryForecast: null,
+      actualDelivery: null,
+      project: null,
+      serviceLocation: null,
+      totalHours: "8.00",
+      totalValue: "1136.00"
+    });
+    this.currentTimeEntryId = 4;
+  }
+
   // Time Entries
   async getTimeEntries(): Promise<TimeEntryDetailed[]> {
     const entriesList = Array.from(this.timeEntries.values());
@@ -388,6 +541,7 @@ export class MemStorage implements IStorage {
       clientId: insertTimeEntry.clientId,
       serviceId: insertTimeEntry.serviceId,
       sectorId: insertTimeEntry.sectorId || null,
+      serviceTypeId: insertTimeEntry.serviceTypeId || null,
       startTime: insertTimeEntry.startTime,
       endTime: insertTimeEntry.endTime,
       description: insertTimeEntry.description || null,
@@ -777,6 +931,38 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSector(id: number): Promise<boolean> {
     const result = await db.delete(sectors).where(eq(sectors.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Service Types
+  async getServiceTypes(): Promise<ServiceType[]> {
+    return await db.select().from(serviceTypes);
+  }
+
+  async getServiceType(id: number): Promise<ServiceType | undefined> {
+    const [serviceType] = await db.select().from(serviceTypes).where(eq(serviceTypes.id, id));
+    return serviceType || undefined;
+  }
+
+  async createServiceType(insertServiceType: InsertServiceType): Promise<ServiceType> {
+    const [serviceType] = await db
+      .insert(serviceTypes)
+      .values(insertServiceType)
+      .returning();
+    return serviceType;
+  }
+
+  async updateServiceType(id: number, updateData: Partial<InsertServiceType>): Promise<ServiceType | undefined> {
+    const [serviceType] = await db
+      .update(serviceTypes)
+      .set(updateData)
+      .where(eq(serviceTypes.id, id))
+      .returning();
+    return serviceType || undefined;
+  }
+
+  async deleteServiceType(id: number): Promise<boolean> {
+    const result = await db.delete(serviceTypes).where(eq(serviceTypes.id, id));
     return (result.rowCount ?? 0) > 0;
   }
 

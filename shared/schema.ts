@@ -33,6 +33,12 @@ export const sectors = pgTable("sectors", {
   description: text("description").notNull(),
 });
 
+export const serviceTypes = pgTable("service_types", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull(),
+});
+
 export const timeEntries = pgTable("time_entries", {
   id: serial("id").primaryKey(),
   date: text("date").notNull(), // YYYY-MM-DD format
@@ -40,6 +46,7 @@ export const timeEntries = pgTable("time_entries", {
   clientId: integer("client_id").notNull().references(() => clients.id),
   serviceId: integer("service_id").notNull().references(() => services.id),
   sectorId: integer("sector_id").references(() => sectors.id), // optional sector
+  serviceTypeId: integer("service_type_id").references(() => serviceTypes.id), // optional service type
   startTime: text("start_time").notNull(), // HH:MM format
   endTime: text("end_time").notNull(), // HH:MM format
   breakStartTime: text("break_start_time"), // HH:MM format
@@ -89,6 +96,10 @@ export const insertSectorSchema = createInsertSchema(sectors).omit({
   id: true,
 });
 
+export const insertServiceTypeSchema = createInsertSchema(serviceTypes).omit({
+  id: true,
+});
+
 export const insertTimeEntrySchema = createInsertSchema(timeEntries).omit({
   id: true,
   totalHours: true,
@@ -109,6 +120,9 @@ export type Service = typeof services.$inferSelect;
 
 export type InsertSector = z.infer<typeof insertSectorSchema>;
 export type Sector = typeof sectors.$inferSelect;
+
+export type InsertServiceType = z.infer<typeof insertServiceTypeSchema>;
+export type ServiceType = typeof serviceTypes.$inferSelect;
 
 export type InsertTimeEntry = z.infer<typeof insertTimeEntrySchema>;
 export type TimeEntry = typeof timeEntries.$inferSelect;
@@ -148,6 +162,10 @@ export const sectorsRelations = relations(sectors, ({ one }) => ({
   }),
 }));
 
+export const serviceTypesRelations = relations(serviceTypes, ({ many }) => ({
+  timeEntries: many(timeEntries),
+}));
+
 export const timeEntriesRelations = relations(timeEntries, ({ one }) => ({
   consultant: one(consultants, {
     fields: [timeEntries.consultantId],
@@ -164,5 +182,9 @@ export const timeEntriesRelations = relations(timeEntries, ({ one }) => ({
   sector: one(sectors, {
     fields: [timeEntries.sectorId],
     references: [sectors.id],
+  }),
+  serviceType: one(serviceTypes, {
+    fields: [timeEntries.serviceTypeId],
+    references: [serviceTypes.id],
   }),
 }));
