@@ -96,6 +96,7 @@ This is a full-stack time management application built with a modern React front
 
 ```
 Changelog:
+- June 25, 2025. Simplified /clock routing with URL rewriting middleware
 - June 25, 2025. Configured application to serve on /clock path instead of root
 - June 24, 2025. Initial setup
 ```
