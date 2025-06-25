@@ -40,6 +40,19 @@ export default function Billing() {
   const { data: timeEntries = [], isLoading, refetch } = useQuery<TimeEntryDetailed[]>({
     queryKey: ["/api/time-entries/billing", selectedClient, startDate, endDate],
     enabled: shouldFetch && !!selectedClient && !!startDate && !!endDate,
+    queryFn: async () => {
+      console.log("Making API request with:", { selectedClient, startDate, endDate });
+      const params = new URLSearchParams({
+        clientId: selectedClient,
+        startDate: startDate,
+        endDate: endDate
+      });
+      const response = await fetch(`/api/time-entries/billing?${params}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
   });
 
   // Calculate totals - using totalHours and totalValue from database entries
@@ -109,7 +122,10 @@ export default function Billing() {
   };
 
   const handleFilter = () => {
-    if (!selectedClient || !startDate || !endDate) return;
+    if (!selectedClient || !startDate || !endDate) {
+      console.log("Missing required fields:", { selectedClient, startDate, endDate });
+      return;
+    }
     console.log("Filtering with:", { selectedClient, startDate, endDate });
     setSelectedEntries(new Set()); // Clear previous selections
     setShouldFetch(true);
@@ -307,6 +323,19 @@ export default function Billing() {
           </Card>
         )}
 
+        {/* Debug Info */}
+        {shouldFetch && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-sm text-muted-foreground">
+                Debug: Cliente: {selectedClient}, Início: {startDate}, Fim: {endDate}, 
+                Carregando: {isLoading ? 'Sim' : 'Não'}, 
+                Atividades: {timeEntries.length}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Lista de Atividades */}
         {!isLoading && shouldFetch && timeEntries.length > 0 && (
           <Card>
@@ -341,7 +370,7 @@ export default function Billing() {
                       <div className="flex items-center justify-between">
                         <div className="font-medium">{entry.service.description}</div>
                         <div className="text-sm text-muted-foreground">
-                          {format(new Date(entry.date), "dd/MM/yyyy", { locale: ptBR })}
+                          {new Date(entry.date + 'T00:00:00').toLocaleDateString('pt-BR')}
                         </div>
                       </div>
                       
@@ -391,7 +420,7 @@ export default function Billing() {
               </div>
               <div className="text-sm text-muted-foreground mt-2">
                 Cliente: {clients.find(c => c.id.toString() === selectedClient)?.name} | 
-                Período: {startDate} a {endDate}
+                Período: {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString('pt-BR') : ''} a {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString('pt-BR') : ''}
               </div>
             </CardContent>
           </Card>
