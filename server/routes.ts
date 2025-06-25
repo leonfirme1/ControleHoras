@@ -130,6 +130,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { clientId, startDate, endDate } = req.query;
       
+      console.log("Billing request:", { clientId, startDate, endDate });
+      
       if (!clientId || !startDate || !endDate) {
         return res.status(400).json({ message: "clientId, startDate, and endDate are required" });
       }
@@ -138,10 +140,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate as string, 
         endDate as string
       );
+      
+      console.log(`Found ${entries.length} entries in date range`);
 
-      const filteredEntries = entries.filter(entry => 
-        entry.client.id === parseInt(clientId as string)
-      );
+      const filteredEntries = entries.filter(entry => {
+        const matchesClient = entry.client.id === parseInt(clientId as string);
+        console.log(`Entry ${entry.id}: client ${entry.client.id} vs ${clientId}, matches: ${matchesClient}`);
+        return matchesClient;
+      });
+      
+      console.log(`Filtered to ${filteredEntries.length} entries for client`);
 
       res.json(filteredEntries);
     } catch (error) {

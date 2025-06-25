@@ -30,15 +30,16 @@ export default function Billing() {
   const [selectedEntries, setSelectedEntries] = useState<Set<number>>(new Set());
   const [showValues, setShowValues] = useState(false);
   const [reportType, setReportType] = useState<"detailed" | "synthetic">("detailed");
+  const [shouldFetch, setShouldFetch] = useState(false);
 
   // Queries
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
   });
 
-  const { data: timeEntries = [], isLoading } = useQuery<TimeEntryDetailed[]>({
+  const { data: timeEntries = [], isLoading, refetch } = useQuery<TimeEntryDetailed[]>({
     queryKey: ["/api/time-entries/billing", selectedClient, startDate, endDate],
-    enabled: !!selectedClient && !!startDate && !!endDate,
+    enabled: shouldFetch && !!selectedClient && !!startDate && !!endDate,
   });
 
   // Calculate totals - using calculated hours and value from time entries
@@ -144,6 +145,12 @@ export default function Billing() {
     setSelectedEntries(newSelected);
   };
 
+  const handleFilter = () => {
+    if (!selectedClient || !startDate || !endDate) return;
+    setShouldFetch(true);
+    refetch();
+  };
+
   const handleGeneratePDF = async () => {
     if (!selectedClient || selectedEntries.size === 0) return;
 
@@ -242,15 +249,26 @@ export default function Billing() {
             </div>
 
             <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowValues(!showValues)}
-                className="flex items-center gap-2"
-              >
-                {showValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                {showValues ? "Ocultar Valores" : "Mostrar Valores"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleFilter}
+                  disabled={!selectedClient || !startDate || !endDate}
+                  className="flex items-center gap-2"
+                >
+                  <Calendar className="h-4 w-4" />
+                  Filtrar
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowValues(!showValues)}
+                  className="flex items-center gap-2"
+                >
+                  {showValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showValues ? "Ocultar Valores" : "Mostrar Valores"}
+                </Button>
+              </div>
 
               <Button
                 onClick={handleGeneratePDF}
@@ -427,11 +445,15 @@ export default function Billing() {
           </div>
         )}
 
-        {!isLoading && timeEntries.length === 0 && selectedClient && startDate && endDate && (
+        {!isLoading && timeEntries.length === 0 && shouldFetch && selectedClient && startDate && endDate && (
           <Card>
             <CardContent className="text-center py-8">
               <div className="text-muted-foreground">
                 Nenhuma atividade encontrada para o período selecionado.
+              </div>
+              <div className="text-sm text-muted-foreground mt-2">
+                Cliente: {clients.find(c => c.id.toString() === selectedClient)?.name} | 
+                Período: {new Date(startDate).toLocaleDateString('pt-BR')} a {new Date(endDate).toLocaleDateString('pt-BR')}
               </div>
             </CardContent>
           </Card>
