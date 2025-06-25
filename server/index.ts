@@ -2,16 +2,11 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
+import fs from "fs";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Mount the application at /clock path
-app.use("/clock", express.static("client/dist"));
-app.get("/clock/*", (req, res) => {
-  res.sendFile(path.resolve("client/dist/index.html"));
-});
 
 // Redirect root to /clock
 app.get("/", (req, res) => {
@@ -63,14 +58,32 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
-    // In development, also set up the /clock route for Vite
-    app.use("/clock", async (req, res, next) => {
+    // In development, set up /clock middleware for Vite
+    app.use("/clock", (req, res, next) => {
       // Rewrite the URL to remove /clock prefix for Vite
+      const originalUrl = req.url;
       req.url = req.url.replace(/^\/clock/, '') || '/';
+      req.originalUrl = originalUrl;
       next();
     });
     await setupVite(app, server);
   } else {
+    // In production, set up /clock routing before calling serveStatic
+    const publicPath = path.resolve(import.meta.dirname, "public");
+    
+    // Serve static files at /clock
+    app.use("/clock", express.static(publicPath));
+    
+    // Handle SPA routing for /clock/*
+    app.get("/clock/*", (req, res) => {
+      const indexPath = path.resolve(publicPath, "index.html");
+      if (require('fs').existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send("Application not built. Run 'npm run build' first.");
+      }
+    });
+    
     serveStatic(app);
   }
 
