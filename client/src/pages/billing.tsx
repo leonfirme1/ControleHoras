@@ -323,18 +323,7 @@ export default function Billing() {
           </Card>
         )}
 
-        {/* Debug Info */}
-        {shouldFetch && (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-sm text-muted-foreground">
-                Debug: Cliente: {selectedClient}, Início: {startDate}, Fim: {endDate}, 
-                Carregando: {isLoading ? 'Sim' : 'Não'}, 
-                Atividades: {timeEntries.length}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
 
         {/* Lista de Atividades */}
         {!isLoading && shouldFetch && timeEntries.length > 0 && (
