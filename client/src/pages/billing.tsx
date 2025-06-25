@@ -42,72 +42,35 @@ export default function Billing() {
     enabled: shouldFetch && !!selectedClient && !!startDate && !!endDate,
   });
 
-  // Calculate totals - using calculated hours and value from time entries
+  // Calculate totals - using totalHours and totalValue from database entries
   const selectedTimeEntries = timeEntries.filter(entry => selectedEntries.has(entry.id));
   const totalHours = selectedTimeEntries.reduce((sum, entry) => {
-    // Calculate hours from start/end time
-    const start = new Date(`2000-01-01T${entry.startTime}`);
-    const end = new Date(`2000-01-01T${entry.endTime}`);
-    let hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-    
-    // Subtract break time if present
-    if (entry.breakStartTime && entry.breakEndTime) {
-      const breakStart = new Date(`2000-01-01T${entry.breakStartTime}`);
-      const breakEnd = new Date(`2000-01-01T${entry.breakEndTime}`);
-      const breakHours = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
-      hours -= breakHours;
-    }
-    
-    return sum + hours;
+    return sum + parseFloat(entry.totalHours || "0");
   }, 0);
   
   const totalValue = selectedTimeEntries.reduce((sum, entry) => {
-    // Calculate hours
-    const start = new Date(`2000-01-01T${entry.startTime}`);
-    const end = new Date(`2000-01-01T${entry.endTime}`);
-    let hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-    
-    if (entry.breakStartTime && entry.breakEndTime) {
-      const breakStart = new Date(`2000-01-01T${entry.breakStartTime}`);
-      const breakEnd = new Date(`2000-01-01T${entry.breakEndTime}`);
-      const breakHours = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
-      hours -= breakHours;
-    }
-    
-    // Calculate value using service hourly rate
-    const hourlyRate = parseFloat(entry.service.hourlyRate) || 0;
-    return sum + (hours * hourlyRate);
+    return sum + parseFloat(entry.totalValue || "0");
   }, 0);
 
   // Group by project-sector-service type
   const groupedData: BillingGroupItem[] = selectedTimeEntries.reduce((groups, entry) => {
-    // Calculate hours for this entry
-    const start = new Date(`2000-01-01T${entry.startTime}`);
-    const end = new Date(`2000-01-01T${entry.endTime}`);
-    let hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    // Use totalHours and totalValue from database
+    const hours = parseFloat(entry.totalHours || "0");
+    const value = parseFloat(entry.totalValue || "0");
     
-    if (entry.breakStartTime && entry.breakEndTime) {
-      const breakStart = new Date(`2000-01-01T${entry.breakStartTime}`);
-      const breakEnd = new Date(`2000-01-01T${entry.breakEndTime}`);
-      const breakHours = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
-      hours -= breakHours;
-    }
-    
-    // Calculate value for this entry
-    const hourlyRate = parseFloat(entry.service.hourlyRate) || 0;
-    const value = hours * hourlyRate;
-    
-    // Get sector name - need to find it from the sector relation or use sectorId
+    // Get sector name
     let sectorName = 'Sem Setor';
-    // Since TimeEntryDetailed should include sector info, but if not available, use sectorId
     if (entry.sectorId) {
       sectorName = `Setor ${entry.sectorId}`;
     }
     
+    // Use project field if available, otherwise service description
+    const projectName = entry.project || entry.service.description;
+    
     const existing = groups.find(g => 
-      g.project === entry.service.description && 
+      g.project === projectName && 
       g.sector === sectorName && 
-      g.serviceType === 'Padrão' // Default service type
+      g.serviceType === 'Padrão'
     );
 
     if (existing) {
@@ -116,7 +79,7 @@ export default function Billing() {
       existing.entries += 1;
     } else {
       groups.push({
-        project: entry.service.description,
+        project: projectName,
         sector: sectorName,
         serviceType: 'Padrão',
         hours: hours,
@@ -147,6 +110,8 @@ export default function Billing() {
 
   const handleFilter = () => {
     if (!selectedClient || !startDate || !endDate) return;
+    console.log("Filtering with:", { selectedClient, startDate, endDate });
+    setSelectedEntries(new Set()); // Clear previous selections
     setShouldFetch(true);
     refetch();
   };
@@ -343,7 +308,7 @@ export default function Billing() {
         )}
 
         {/* Lista de Atividades */}
-        {timeEntries.length > 0 && (
+        {!isLoading && shouldFetch && timeEntries.length > 0 && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -391,39 +356,12 @@ export default function Billing() {
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          {(() => {
-                            const start = new Date(`2000-01-01T${entry.startTime}`);
-                            const end = new Date(`2000-01-01T${entry.endTime}`);
-                            let hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-                            
-                            if (entry.breakStartTime && entry.breakEndTime) {
-                              const breakStart = new Date(`2000-01-01T${entry.breakStartTime}`);
-                              const breakEnd = new Date(`2000-01-01T${entry.breakEndTime}`);
-                              const breakHours = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
-                              hours -= breakHours;
-                            }
-                            
-                            return hours.toFixed(2);
-                          })()}h
+                          {parseFloat(entry.totalHours || "0").toFixed(2)}h
                         </div>
                         {showValues && (
                           <div className="flex items-center gap-1">
                             <DollarSign className="h-4 w-4" />
-                            R$ {(() => {
-                              const start = new Date(`2000-01-01T${entry.startTime}`);
-                              const end = new Date(`2000-01-01T${entry.endTime}`);
-                              let hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-                              
-                              if (entry.breakStartTime && entry.breakEndTime) {
-                                const breakStart = new Date(`2000-01-01T${entry.breakStartTime}`);
-                                const breakEnd = new Date(`2000-01-01T${entry.breakEndTime}`);
-                                const breakHours = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
-                                hours -= breakHours;
-                              }
-                              
-                              const hourlyRate = parseFloat(entry.service.hourlyRate) || 0;
-                              return (hours * hourlyRate).toFixed(2);
-                            })()}
+                            R$ {parseFloat(entry.totalValue || "0").toFixed(2)}
                           </div>
                         )}
                         <Badge variant="secondary">{entry.consultant.name}</Badge>
@@ -439,13 +377,13 @@ export default function Billing() {
           </Card>
         )}
 
-        {isLoading && (
+        {isLoading && shouldFetch && (
           <div className="text-center py-8">
             <div className="text-muted-foreground">Carregando atividades...</div>
           </div>
         )}
 
-        {!isLoading && timeEntries.length === 0 && shouldFetch && selectedClient && startDate && endDate && (
+        {!isLoading && shouldFetch && timeEntries.length === 0 && selectedClient && startDate && endDate && (
           <Card>
             <CardContent className="text-center py-8">
               <div className="text-muted-foreground">
@@ -453,7 +391,7 @@ export default function Billing() {
               </div>
               <div className="text-sm text-muted-foreground mt-2">
                 Cliente: {clients.find(c => c.id.toString() === selectedClient)?.name} | 
-                Período: {new Date(startDate).toLocaleDateString('pt-BR')} a {new Date(endDate).toLocaleDateString('pt-BR')}
+                Período: {startDate} a {endDate}
               </div>
             </CardContent>
           </Card>

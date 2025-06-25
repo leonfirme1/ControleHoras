@@ -145,7 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const filteredEntries = entries.filter(entry => {
         const matchesClient = entry.client.id === parseInt(clientId as string);
-        console.log(`Entry ${entry.id}: client ${entry.client.id} vs ${clientId}, matches: ${matchesClient}`);
+        console.log(`Entry ${entry.id}: date ${entry.date}, client ${entry.client.id} vs ${clientId}, matches: ${matchesClient}`);
         return matchesClient;
       });
       
