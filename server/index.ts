@@ -6,6 +6,11 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Redirect root to /clock
+app.get("/", (req, res) => {
+  res.redirect("/clock");
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -19,7 +24,7 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
+    if (path.startsWith("/api") || path.startsWith("/clock/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
