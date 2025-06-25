@@ -8,10 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Redirect root to /clock
-app.get("/", (req, res) => {
-  res.redirect("/clock");
-});
+
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -46,14 +43,7 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  // Add /clock routes after API routes
-  app.use("/clock", (req, res, next) => {
-    // Rewrite URL for /clock routes
-    const originalUrl = req.originalUrl;
-    req.url = req.url.replace(/^\/clock/, "") || "/";
-    if (!req.url.startsWith("/")) req.url = "/" + req.url;
-    next();
-  });
+
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -69,7 +59,6 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    // In production, serve static files - build will handle the /clock routing
     serveStatic(app);
   }
 

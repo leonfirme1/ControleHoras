@@ -43,7 +43,6 @@ This is a full-stack time management application built with a modern React front
 - **CRUD operations**: Full create, read, update, delete for all entities
 - **Authentication**: Login endpoint with session management
 - **Filtering**: Advanced filtering for time entries and reports
-- **Base Path**: Application serves on `/clock` path, APIs remain at `/api/*`
 
 ### Frontend Pages
 - **Dashboard**: Overview with statistics and charts
@@ -96,8 +95,7 @@ This is a full-stack time management application built with a modern React front
 
 ```
 Changelog:
-- June 25, 2025. Simplified /clock routing with URL rewriting middleware
-- June 25, 2025. Configured application to serve on /clock path instead of root
+- June 25, 2025. Reverted /clock configuration, back to root path deployment
 - June 24, 2025. Initial setup
 ```
 
