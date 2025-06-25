@@ -15,6 +15,7 @@ import ServiceTypes from "@/pages/service-types";
 import TimeEntries from "@/pages/time-entries";
 import Activities from "@/pages/activities";
 import Reports from "@/pages/reports";
+import Billing from "@/pages/billing";
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
 
@@ -97,6 +98,7 @@ function Router() {
         <Route path="/time-entries" component={TimeEntries} />
         <Route path="/activities" component={Activities} />
         <Route path="/reports" component={Reports} />
+        <Route path="/billing" component={Billing} />
         <Route component={NotFound} />
       </Switch>
     </AuthContext.Provider>

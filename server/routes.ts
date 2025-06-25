@@ -1,6 +1,118 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+
+// PDF generation function using simple text format
+function generatePDFContent(data: any): Buffer {
+  const content = generateInvoiceText(data);
+  
+  // Simple PDF-like content (this would be replaced with actual PDF generation using jsPDF)
+  const pdfBuffer = Buffer.from(`
+%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+>>
+endobj
+
+4 0 obj
+<<
+/Length ${content.length}
+>>
+stream
+BT
+/F1 12 Tf
+72 720 Td
+(${content.replace(/\n/g, ') Tj T* (')}) Tj
+ET
+endstream
+endobj
+
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000200 00000 n 
+trailer
+<<
+/Size 5
+/Root 1 0 R
+>>
+startxref
+${300 + content.length}
+%%EOF
+  `);
+  
+  return pdfBuffer;
+}
+
+function generateInvoiceText(data: any): string {
+  const { client, startDate, endDate, entries, groupedData, totalHours, totalValue, reportType } = data;
+  
+  return `
+FATURA - ${client.name}
+CNPJ: ${client.cnpj}
+Email: ${client.email}
+
+Período: ${new Date(startDate).toLocaleDateString('pt-BR')} a ${new Date(endDate).toLocaleDateString('pt-BR')}
+
+${reportType === 'detailed' ? 
+  'DETALHAMENTO POR ATIVIDADE:\n' + 
+  entries.map((entry: any) => 
+    `${new Date(entry.date).toLocaleDateString('pt-BR')} - ${entry.service.description} - ${entry.consultant.name} - ${calculateEntryHours(entry)}h - R$ ${calculateEntryValue(entry).toFixed(2)}\n${entry.description}`
+  ).join('\n\n') :
+  'RESUMO POR PROJETO:\n' +
+  groupedData.map((group: any) =>
+    `${group.project} (${group.sector} - ${group.serviceType}) - ${group.hours.toFixed(2)}h - R$ ${group.value.toFixed(2)}`
+  ).join('\n')
+}
+
+TOTAIS:
+Total de Horas: ${totalHours.toFixed(2)}h
+Valor Total: R$ ${totalValue.toFixed(2)}
+  `.trim();
+}
+
+function calculateEntryHours(entry: any): number {
+  const start = new Date(`2000-01-01T${entry.startTime}`);
+  const end = new Date(`2000-01-01T${entry.endTime}`);
+  let hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+  
+  if (entry.breakStartTime && entry.breakEndTime) {
+    const breakStart = new Date(`2000-01-01T${entry.breakStartTime}`);
+    const breakEnd = new Date(`2000-01-01T${entry.breakEndTime}`);
+    const breakHours = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+    hours -= breakHours;
+  }
+  
+  return hours;
+}
+
+function calculateEntryValue(entry: any): number {
+  const hours = calculateEntryHours(entry);
+  const hourlyRate = parseFloat(entry.service.hourlyRate) || 0;
+  return hours * hourlyRate;
+}
 import { 
   insertClientSchema, 
   insertConsultantSchema, 
@@ -13,6 +125,108 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Billing routes
+  app.get("/api/time-entries/billing", async (req, res) => {
+    try {
+      const { clientId, startDate, endDate } = req.query;
+      
+      if (!clientId || !startDate || !endDate) {
+        return res.status(400).json({ message: "clientId, startDate, and endDate are required" });
+      }
+
+      const entries = await storage.getTimeEntriesByDateRange(
+        startDate as string, 
+        endDate as string
+      );
+
+      const filteredEntries = entries.filter(entry => 
+        entry.client.id === parseInt(clientId as string)
+      );
+
+      res.json(filteredEntries);
+    } catch (error) {
+      console.error("Error fetching billing entries:", error);
+      res.status(500).json({ message: "Failed to fetch billing entries" });
+    }
+  });
+
+  app.post("/api/billing/generate-pdf", async (req, res) => {
+    try {
+      const { clientId, startDate, endDate, entryIds, reportType } = req.body;
+      
+      if (!clientId || !startDate || !endDate || !entryIds?.length) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Get client info
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      // Get selected entries
+      const allEntries = await storage.getTimeEntriesByDateRange(startDate, endDate);
+      const selectedEntries = allEntries.filter(entry => 
+        entryIds.includes(entry.id) && entry.client.id === clientId
+      );
+
+      if (selectedEntries.length === 0) {
+        return res.status(400).json({ message: "No entries found" });
+      }
+
+      // Calculate totals
+      const totalHours = selectedEntries.reduce((sum, entry) => sum + calculateEntryHours(entry), 0);
+      const totalValue = selectedEntries.reduce((sum, entry) => sum + calculateEntryValue(entry), 0);
+
+      // Group by project-sector-service type for synthetic report
+      const groupedData = selectedEntries.reduce((groups, entry) => {
+        const hours = calculateEntryHours(entry);
+        const value = calculateEntryValue(entry);
+        const sectorName = entry.sectorId ? `Setor ${entry.sectorId}` : 'Sem Setor';
+        
+        const existing = groups.find(g => 
+          g.project === entry.service.description && 
+          g.sector === sectorName && 
+          g.serviceType === 'Padrão'
+        );
+
+        if (existing) {
+          existing.hours += hours;
+          existing.value += value;
+          existing.entries += 1;
+        } else {
+          groups.push({
+            project: entry.service.description,
+            sector: sectorName,
+            serviceType: 'Padrão',
+            hours: hours,
+            value: value,
+            entries: 1,
+          });
+        }
+        return groups;
+      }, [] as any[]);
+
+      // Generate PDF content based on report type
+      const pdfContent = generatePDFContent({
+        client,
+        startDate,
+        endDate,
+        entries: selectedEntries,
+        groupedData,
+        totalHours,
+        totalValue,
+        reportType,
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="fatura-${client.name}-${startDate}-${endDate}.pdf"`);
+      res.send(pdfContent);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      res.status(500).json({ message: "Failed to generate PDF" });
+    }
+  });
   // Authentication routes
   app.post("/api/login", async (req, res) => {
     try {

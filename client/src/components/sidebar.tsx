@@ -12,7 +12,8 @@ import {
   HeadphonesIcon,
   LucideIcon,
   ChevronLeft,
-  PanelLeftClose
+  PanelLeftClose,
+  Receipt
 } from "lucide-react";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ const navigation: NavigationItem[] = [
   { name: "Tipo Atendimento", href: "/service-types", icon: HeadphonesIcon },
   { name: "separator", href: "", icon: null },
   { name: "Relatórios", href: "/reports", icon: ChartBar },
+  { name: "Faturamento", href: "/billing", icon: Receipt },
 ];
 
 export function Sidebar() {

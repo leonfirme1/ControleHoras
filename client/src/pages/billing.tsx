@@ -41,31 +41,85 @@ export default function Billing() {
     enabled: !!selectedClient && !!startDate && !!endDate,
   });
 
-  // Calculate totals
+  // Calculate totals - using calculated hours and value from time entries
   const selectedTimeEntries = timeEntries.filter(entry => selectedEntries.has(entry.id));
-  const totalHours = selectedTimeEntries.reduce((sum, entry) => sum + entry.hours, 0);
-  const totalValue = selectedTimeEntries.reduce((sum, entry) => sum + entry.value, 0);
+  const totalHours = selectedTimeEntries.reduce((sum, entry) => {
+    // Calculate hours from start/end time
+    const start = new Date(`2000-01-01T${entry.startTime}`);
+    const end = new Date(`2000-01-01T${entry.endTime}`);
+    let hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    
+    // Subtract break time if present
+    if (entry.breakStartTime && entry.breakEndTime) {
+      const breakStart = new Date(`2000-01-01T${entry.breakStartTime}`);
+      const breakEnd = new Date(`2000-01-01T${entry.breakEndTime}`);
+      const breakHours = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+      hours -= breakHours;
+    }
+    
+    return sum + hours;
+  }, 0);
+  
+  const totalValue = selectedTimeEntries.reduce((sum, entry) => {
+    // Calculate hours
+    const start = new Date(`2000-01-01T${entry.startTime}`);
+    const end = new Date(`2000-01-01T${entry.endTime}`);
+    let hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    
+    if (entry.breakStartTime && entry.breakEndTime) {
+      const breakStart = new Date(`2000-01-01T${entry.breakStartTime}`);
+      const breakEnd = new Date(`2000-01-01T${entry.breakEndTime}`);
+      const breakHours = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+      hours -= breakHours;
+    }
+    
+    // Calculate value using service hourly rate
+    const hourlyRate = parseFloat(entry.service.hourlyRate) || 0;
+    return sum + (hours * hourlyRate);
+  }, 0);
 
   // Group by project-sector-service type
   const groupedData: BillingGroupItem[] = selectedTimeEntries.reduce((groups, entry) => {
-    const key = `${entry.service.name}-${entry.sector?.name || 'Sem Setor'}-${entry.service.serviceType || 'Sem Tipo'}`;
+    // Calculate hours for this entry
+    const start = new Date(`2000-01-01T${entry.startTime}`);
+    const end = new Date(`2000-01-01T${entry.endTime}`);
+    let hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    
+    if (entry.breakStartTime && entry.breakEndTime) {
+      const breakStart = new Date(`2000-01-01T${entry.breakStartTime}`);
+      const breakEnd = new Date(`2000-01-01T${entry.breakEndTime}`);
+      const breakHours = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+      hours -= breakHours;
+    }
+    
+    // Calculate value for this entry
+    const hourlyRate = parseFloat(entry.service.hourlyRate) || 0;
+    const value = hours * hourlyRate;
+    
+    // Get sector name - need to find it from the sector relation or use sectorId
+    let sectorName = 'Sem Setor';
+    // Since TimeEntryDetailed should include sector info, but if not available, use sectorId
+    if (entry.sectorId) {
+      sectorName = `Setor ${entry.sectorId}`;
+    }
+    
     const existing = groups.find(g => 
-      g.project === entry.service.name && 
-      g.sector === (entry.sector?.name || 'Sem Setor') && 
-      g.serviceType === (entry.service.serviceType || 'Sem Tipo')
+      g.project === entry.service.description && 
+      g.sector === sectorName && 
+      g.serviceType === 'Padrão' // Default service type
     );
 
     if (existing) {
-      existing.hours += entry.hours;
-      existing.value += entry.value;
+      existing.hours += hours;
+      existing.value += value;
       existing.entries += 1;
     } else {
       groups.push({
-        project: entry.service.name,
-        sector: entry.sector?.name || 'Sem Setor',
-        serviceType: entry.service.serviceType || 'Sem Tipo',
-        hours: entry.hours,
-        value: entry.value,
+        project: entry.service.description,
+        sector: sectorName,
+        serviceType: 'Padrão',
+        hours: hours,
+        value: value,
         entries: 1,
       });
     }
@@ -302,7 +356,7 @@ export default function Billing() {
                     
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center justify-between">
-                        <div className="font-medium">{entry.service.name}</div>
+                        <div className="font-medium">{entry.service.description}</div>
                         <div className="text-sm text-muted-foreground">
                           {format(new Date(entry.date), "dd/MM/yyyy", { locale: ptBR })}
                         </div>
@@ -319,17 +373,44 @@ export default function Billing() {
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          {entry.hours.toFixed(2)}h
+                          {(() => {
+                            const start = new Date(`2000-01-01T${entry.startTime}`);
+                            const end = new Date(`2000-01-01T${entry.endTime}`);
+                            let hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+                            
+                            if (entry.breakStartTime && entry.breakEndTime) {
+                              const breakStart = new Date(`2000-01-01T${entry.breakStartTime}`);
+                              const breakEnd = new Date(`2000-01-01T${entry.breakEndTime}`);
+                              const breakHours = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+                              hours -= breakHours;
+                            }
+                            
+                            return hours.toFixed(2);
+                          })()}h
                         </div>
                         {showValues && (
                           <div className="flex items-center gap-1">
                             <DollarSign className="h-4 w-4" />
-                            R$ {entry.value.toFixed(2)}
+                            R$ {(() => {
+                              const start = new Date(`2000-01-01T${entry.startTime}`);
+                              const end = new Date(`2000-01-01T${entry.endTime}`);
+                              let hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+                              
+                              if (entry.breakStartTime && entry.breakEndTime) {
+                                const breakStart = new Date(`2000-01-01T${entry.breakStartTime}`);
+                                const breakEnd = new Date(`2000-01-01T${entry.breakEndTime}`);
+                                const breakHours = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+                                hours -= breakHours;
+                              }
+                              
+                              const hourlyRate = parseFloat(entry.service.hourlyRate) || 0;
+                              return (hours * hourlyRate).toFixed(2);
+                            })()}
                           </div>
                         )}
                         <Badge variant="secondary">{entry.consultant.name}</Badge>
-                        {entry.sector && (
-                          <Badge variant="outline">{entry.sector.name}</Badge>
+                        {entry.sectorId && (
+                          <Badge variant="outline">Setor {entry.sectorId}</Badge>
                         )}
                       </div>
                     </div>
