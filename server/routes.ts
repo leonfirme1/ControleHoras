@@ -14,7 +14,7 @@ import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
-  app.post("/clock/api/login", async (req, res) => {
+  app.post("/api/login", async (req, res) => {
     try {
       const validatedData = loginSchema.parse(req.body);
       const consultant = await storage.authenticateConsultant(validatedData);
@@ -37,7 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Clients routes
-  app.get("/clock/api/clients", async (req, res) => {
+  app.get("/api/clients", async (req, res) => {
     try {
       const clients = await storage.getClients();
       res.json(clients);
@@ -46,7 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/clock/api/clients/:id", async (req, res) => {
+  app.get("/api/clients/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const client = await storage.getClient(id);
@@ -59,7 +59,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/clock/api/clients", async (req, res) => {
+  app.post("/api/clients", async (req, res) => {
     try {
       const validatedData = insertClientSchema.parse(req.body);
       
@@ -80,7 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/clock/api/clients/:id", async (req, res) => {
+  app.put("/api/clients/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertClientSchema.partial().parse(req.body);
@@ -99,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/clock/api/clients/:id", async (req, res) => {
+  app.delete("/api/clients/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteClient(id);
@@ -113,7 +113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Consultants routes
-  app.get("/clock/api/consultants", async (req, res) => {
+  app.get("/api/consultants", async (req, res) => {
     try {
       const consultants = await storage.getConsultants();
       res.json(consultants);
@@ -122,7 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/clock/api/consultants", async (req, res) => {
+  app.post("/api/consultants", async (req, res) => {
     try {
       const validatedData = insertConsultantSchema.parse(req.body);
       
@@ -143,7 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/clock/api/consultants/:id", async (req, res) => {
+  app.put("/api/consultants/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertConsultantSchema.partial().parse(req.body);
@@ -162,7 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/clock/api/consultants/:id", async (req, res) => {
+  app.delete("/api/consultants/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteConsultant(id);
@@ -176,7 +176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Services routes
-  app.get("/clock/api/services", async (req, res) => {
+  app.get("/api/services", async (req, res) => {
     try {
       const services = await storage.getServices();
       res.json(services);
@@ -185,7 +185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/clock/api/services/by-client/:clientId", async (req, res) => {
+  app.get("/api/services/by-client/:clientId", async (req, res) => {
     try {
       const clientId = parseInt(req.params.clientId);
       const services = await storage.getServicesByClient(clientId);
@@ -195,7 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/clock/api/services", async (req, res) => {
+  app.post("/api/services", async (req, res) => {
     try {
       const validatedData = insertServiceSchema.parse(req.body);
       const service = await storage.createService(validatedData);
@@ -209,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/clock/api/services/:id", async (req, res) => {
+  app.put("/api/services/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertServiceSchema.partial().parse(req.body);
@@ -228,7 +228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/clock/api/services/:id", async (req, res) => {
+  app.delete("/api/services/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteService(id);
@@ -242,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Sectors routes
-  app.get("/clock/api/sectors", async (req, res) => {
+  app.get("/api/sectors", async (req, res) => {
     try {
       const sectors = await storage.getSectors();
       res.json(sectors);
@@ -251,7 +251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/clock/api/sectors/by-client/:clientId", async (req, res) => {
+  app.get("/api/sectors/by-client/:clientId", async (req, res) => {
     try {
       const clientId = parseInt(req.params.clientId);
       const sectors = await storage.getSectorsByClient(clientId);
@@ -261,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/clock/api/sectors", async (req, res) => {
+  app.post("/api/sectors", async (req, res) => {
     try {
       const validatedData = insertSectorSchema.parse(req.body);
       const sector = await storage.createSector(validatedData);
@@ -275,7 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/clock/api/sectors/:id", async (req, res) => {
+  app.put("/api/sectors/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertSectorSchema.partial().parse(req.body);
@@ -294,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/clock/api/sectors/:id", async (req, res) => {
+  app.delete("/api/sectors/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteSector(id);
@@ -308,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Service Types routes
-  app.get("/clock/api/service-types", async (req, res) => {
+  app.get("/api/service-types", async (req, res) => {
     try {
       const serviceTypes = await storage.getServiceTypes();
       res.json(serviceTypes);
@@ -318,7 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/clock/api/service-types", async (req, res) => {
+  app.post("/api/service-types", async (req, res) => {
     try {
       const validatedData = insertServiceTypeSchema.parse(req.body);
       const serviceType = await storage.createServiceType(validatedData);
@@ -333,7 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/clock/api/service-types/:id", async (req, res) => {
+  app.put("/api/service-types/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertServiceTypeSchema.partial().parse(req.body);
@@ -352,7 +352,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/clock/api/service-types/:id", async (req, res) => {
+  app.delete("/api/service-types/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteServiceType(id);
@@ -366,7 +366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Time entries routes
-  app.get("/clock/api/time-entries", async (req, res) => {
+  app.get("/api/time-entries", async (req, res) => {
     try {
       const month = req.query.month ? parseInt(req.query.month as string) : undefined;
       const year = req.query.year ? parseInt(req.query.year as string) : undefined;
@@ -386,7 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/clock/api/time-entries/filtered", async (req, res) => {
+  app.get("/api/time-entries/filtered", async (req, res) => {
     try {
       const { startDate, endDate, clientId, consultantId } = req.query;
       
@@ -413,7 +413,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/clock/api/time-entries", async (req, res) => {
+  app.post("/api/time-entries", async (req, res) => {
     try {
       const validatedData = insertTimeEntrySchema.parse(req.body);
       const timeEntry = await storage.createTimeEntry(validatedData);
@@ -427,7 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/clock/api/time-entries/:id", async (req, res) => {
+  app.put("/api/time-entries/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertTimeEntrySchema.partial().parse(req.body);
@@ -446,7 +446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/clock/api/time-entries/:id", async (req, res) => {
+  app.delete("/api/time-entries/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteTimeEntry(id);
@@ -460,7 +460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard stats
-  app.get("/clock/api/dashboard/stats", async (req, res) => {
+  app.get("/api/dashboard/stats", async (req, res) => {
     try {
       const month = req.query.month ? parseInt(req.query.month as string) : undefined;
       const year = req.query.year ? parseInt(req.query.year as string) : undefined;
@@ -472,7 +472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reports
-  app.get("/clock/api/reports", async (req, res) => {
+  app.get("/api/reports", async (req, res) => {
     try {
       const filters = {
         startDate: req.query.startDate as string,

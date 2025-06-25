@@ -39,11 +39,11 @@ This is a full-stack time management application built with a modern React front
 - **Time Entries**: Core entity tracking consultant work hours
 
 ### API Structure
-- **RESTful endpoints**: `/clock/api/*` prefix for all backend routes
+- **RESTful endpoints**: `/api/*` prefix for all backend routes
 - **CRUD operations**: Full create, read, update, delete for all entities
 - **Authentication**: Login endpoint with session management
 - **Filtering**: Advanced filtering for time entries and reports
-- **Base Path**: Application serves on `/clock` path, root redirects to `/clock`
+- **Base Path**: Application serves on `/clock` path, APIs remain at `/api/*`
 
 ### Frontend Pages
 - **Dashboard**: Overview with statistics and charts

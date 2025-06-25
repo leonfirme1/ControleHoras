@@ -12,10 +12,7 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<any> {
-  // Add /clock prefix if not already present
-  const finalUrl = url.startsWith('/clock/') ? url : `/clock${url}`;
-  
-  const res = await fetch(finalUrl, {
+  const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -39,10 +36,8 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = queryKey[0] as string;
-    // Add /clock prefix if not already present
-    const finalUrl = url.startsWith('/clock/') ? url : `/clock${url}`;
     
-    const res = await fetch(finalUrl, {
+    const res = await fetch(url, {
       credentials: "include",
     });
 
