@@ -66,18 +66,18 @@ export function Sidebar() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={close}
-            className="text-slate-400 hover:text-white md:hidden"
+            onClick={toggle}
+            className="text-slate-400 hover:text-white"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <PanelLeftClose className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 p-4">
-          {navigation.map((item) => {
+          {navigation.map((item, index) => {
             if (item.name === "separator") {
-              return <hr key={item.name} className="my-3 border-slate-700" />;
+              return <hr key={`separator-${index}`} className="my-3 border-slate-700" />;
             }
 
             const Icon = item.icon;
@@ -85,8 +85,8 @@ export function Sidebar() {
 
             return (
               <Link key={item.name} href={item.href}>
-                <a
-                  className={`flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                <div
+                  className={`flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
                     isActive
                       ? 'bg-slate-800 text-white'
                       : 'text-slate-300 hover:bg-slate-800 hover:text-white'
@@ -100,7 +100,7 @@ export function Sidebar() {
                 >
                   {Icon && <Icon className="h-5 w-5" />}
                   <span>{item.name}</span>
-                </a>
+                </div>
               </Link>
             );
           })}

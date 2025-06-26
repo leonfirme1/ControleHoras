@@ -61,6 +61,10 @@ export default function Analytics() {
     queryKey: ["/api/consultants"],
   });
 
+  const { data: sectors = [] } = useQuery({
+    queryKey: ["/api/sectors"],
+  });
+
   const { data: timeEntries = [], isLoading: entriesLoading } = useQuery({
     queryKey: ["/api/time-entries/filtered", startDate, endDate, selectedClient, selectedConsultant],
     queryFn: async () => {
@@ -128,15 +132,18 @@ export default function Analytics() {
       value: parseFloat(data.value.toFixed(2))
     }));
 
-    // Group by sector (assuming we have sector data in time entries)
+    // Group by sector using actual sector names
     const sectorGroups = timeEntries.reduce((acc: any, entry: TimeEntryDetailed) => {
-      // For now, use service description as sector proxy since sector info might not be directly available
-      const sector = entry.service?.description || 'Outros Serviços';
-      if (!acc[sector]) {
-        acc[sector] = { hours: 0, value: 0 };
+      let sectorName = 'Sem Setor';
+      if (entry.sectorId && sectors.length > 0) {
+        const sector = sectors.find((s: any) => s.id === entry.sectorId);
+        sectorName = sector ? sector.name : `Setor ${entry.sectorId}`;
       }
-      acc[sector].hours += parseFloat(entry.totalHours || '0');
-      acc[sector].value += parseFloat(entry.totalValue || '0');
+      if (!acc[sectorName]) {
+        acc[sectorName] = { hours: 0, value: 0 };
+      }
+      acc[sectorName].hours += parseFloat(entry.totalHours || '0');
+      acc[sectorName].value += parseFloat(entry.totalValue || '0');
       return acc;
     }, {});
 
