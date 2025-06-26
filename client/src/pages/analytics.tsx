@@ -137,7 +137,9 @@ export default function Analytics() {
       let sectorName = 'Sem Setor';
       
       // Debug log to see what data we're getting
-      console.log('Entry sector data:', { sectorId: entry.sectorId, sector: entry.sector });
+      if (entry.sectorId) {
+        console.log('Entry sector data:', { sectorId: entry.sectorId, sector: entry.sector });
+      }
       
       // Check if entry has sector information (from filtered endpoint)
       if (entry.sector && entry.sector.description) {
@@ -160,6 +162,8 @@ export default function Analytics() {
       hours: parseFloat(data.hours.toFixed(2)),
       value: parseFloat(data.value.toFixed(2))
     }));
+    
+    console.log('Final sector stats:', analyticsData.sectorStats);
 
     // Calculate totals
     analyticsData.totalHours = timeEntries.reduce((sum: number, entry: TimeEntryDetailed) => 

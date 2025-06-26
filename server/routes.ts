@@ -811,6 +811,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let sectorInfo = null;
         if (entry.sectorId) {
           sectorInfo = await storage.getSector(entry.sectorId);
+          console.log(`Sector for entry ${entry.id}: ID ${entry.sectorId} -> `, sectorInfo);
         }
         
         return {
