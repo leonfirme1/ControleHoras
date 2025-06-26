@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { BarChart3, Clock, DollarSign, TrendingUp, Users } from "lucide-react";
-import type { Client, Consultant, TimeEntryDetailed } from "@shared/schema";
+import type { Client, Consultant, TimeEntryDetailed, ServiceType } from "@shared/schema";
 
 // Colors for charts
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
@@ -26,6 +26,11 @@ interface AnalyticsData {
     value: number;
   }>;
   sectorStats: Array<{
+    name: string;
+    hours: number;
+    value: number;
+  }>;
+  serviceTypeStats: Array<{
     name: string;
     hours: number;
     value: number;
@@ -65,6 +70,10 @@ export default function Analytics() {
     queryKey: ["/api/sectors"],
   });
 
+  const { data: serviceTypes = [] } = useQuery<ServiceType[]>({
+    queryKey: ["/api/service-types"],
+  });
+
   const { data: timeEntries = [], isLoading: entriesLoading } = useQuery({
     queryKey: ["/api/time-entries/filtered", startDate, endDate, selectedClient, selectedConsultant],
     queryFn: async () => {
@@ -92,6 +101,7 @@ export default function Analytics() {
     projectStats: [],
     serviceLocationStats: [],
     sectorStats: [],
+    serviceTypeStats: [],
     totalHours: 0,
     totalValue: 0,
     totalEntries: timeEntries.length || 0
@@ -164,6 +174,34 @@ export default function Analytics() {
     }));
     
     console.log('Final sector stats:', analyticsData.sectorStats);
+
+    // Group by service type using service type description from service_types table
+    const serviceTypeGroups = timeEntries.reduce((acc: any, entry: any) => {
+      let serviceTypeName = 'Sem Tipo de Atendimento';
+      
+      // Check if entry has service type information
+      if (entry.serviceTypeId && serviceTypes) {
+        const serviceType = serviceTypes.find((st: ServiceType) => st.id === entry.serviceTypeId);
+        if (serviceType) {
+          serviceTypeName = serviceType.description;
+        } else {
+          serviceTypeName = `Tipo ${entry.serviceTypeId}`;
+        }
+      }
+      
+      if (!acc[serviceTypeName]) {
+        acc[serviceTypeName] = { hours: 0, value: 0 };
+      }
+      acc[serviceTypeName].hours += parseFloat(entry.totalHours || '0');
+      acc[serviceTypeName].value += parseFloat(entry.totalValue || '0');
+      return acc;
+    }, {});
+
+    analyticsData.serviceTypeStats = Object.entries(serviceTypeGroups).map(([name, data]: [string, any]) => ({
+      name,
+      hours: parseFloat(data.hours.toFixed(2)),
+      value: parseFloat(data.value.toFixed(2))
+    }));
 
     // Calculate totals
     analyticsData.totalHours = timeEntries.reduce((sum: number, entry: TimeEntryDetailed) => 
@@ -313,10 +351,11 @@ export default function Analytics() {
 
             {/* Charts */}
             <Tabs defaultValue="projeto" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="projeto">Projeto</TabsTrigger>
                 <TabsTrigger value="atendimento">Loc. Atend.</TabsTrigger>
                 <TabsTrigger value="setor">Setor</TabsTrigger>
+                <TabsTrigger value="tipoatendimento">Tipo Atend.</TabsTrigger>
               </TabsList>
 
               <TabsContent value="projeto" className="space-y-4">
@@ -450,6 +489,46 @@ export default function Analytics() {
                           <Tooltip content={<CustomTooltip />} />
                           <Legend />
                           <Bar dataKey="value" fill="#ff7300" name="Valor (R$)" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="tipoatendimento" className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Horas por Tipo de Atendimento</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={analyticsData.serviceTypeStats}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Legend />
+                          <Bar dataKey="hours" fill="#8884d8" name="Horas" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Valor por Tipo de Atendimento</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={analyticsData.serviceTypeStats}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Legend />
+                          <Bar dataKey="value" fill="#82ca9d" name="Valor (R$)" />
                         </BarChart>
                       </ResponsiveContainer>
                     </CardContent>
