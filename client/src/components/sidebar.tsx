@@ -39,7 +39,7 @@ const navigation: NavigationItem[] = [
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { isOpen, toggle } = useSidebar();
+  const { isOpen, toggle, close } = useSidebar();
 
   return (
     <>
@@ -47,15 +47,16 @@ export function Sidebar() {
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={toggle}
+          onClick={close}
         />
       )}
       
       {/* Sidebar */}
       <aside className={`
         fixed top-0 left-0 z-50 h-screen w-64 bg-white shadow-lg border-r border-gray-200
-        transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        transform transition-transform duration-300 ease-in-out
+        lg:relative lg:translate-x-0
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:-translate-x-full'}
       `}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
