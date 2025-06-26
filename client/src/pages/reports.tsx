@@ -26,28 +26,31 @@ interface ReportData {
 export default function Reports() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [selectedClient, setSelectedClient] = useState("all");
-  const [selectedConsultant, setSelectedConsultant] = useState("all");
+  const [selectedClient, setSelectedClient] = useState<string>("");
+  const [selectedConsultant, setSelectedConsultant] = useState<string>("");
+  const [shouldFetch, setShouldFetch] = useState(false);
 
-  const { data: clients } = useQuery<Client[]>({
+  const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
   });
 
-  const { data: consultants } = useQuery<Consultant[]>({
+  const { data: consultants = [] } = useQuery<Consultant[]>({
     queryKey: ["/api/consultants"],
   });
 
-  const { data: reportData, isLoading } = useQuery<ReportData>({
-    queryKey: ["/api/reports", { startDate, endDate, selectedClient, selectedConsultant }],
+  const { data: reportData, isLoading, refetch } = useQuery({
+    queryKey: ["/api/reports/data"],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (startDate) params.append("startDate", startDate);
-      if (endDate) params.append("endDate", endDate);
-      if (selectedClient && selectedClient !== "all") params.append("clientId", selectedClient);
-      if (selectedConsultant && selectedConsultant !== "all") params.append("consultantId", selectedConsultant);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      if (selectedClient) params.append('clientId', selectedClient);
+      if (selectedConsultant) params.append('consultantId', selectedConsultant);
       
-      const response = await fetch(`/api/reports?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch report data");
+      const response = await fetch(`/api/reports/data?${params}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       return response.json();
     },
     enabled: true,

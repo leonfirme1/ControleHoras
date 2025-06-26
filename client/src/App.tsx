@@ -98,7 +98,7 @@ function Router() {
         <Route path="/time-entries" component={TimeEntries} />
         <Route path="/activities" component={Activities} />
         <Route path="/reports" component={Reports} />
-        <Route path="/billing" component={Billing} />
+
         <Route component={NotFound} />
       </Switch>
     </AuthContext.Provider>
