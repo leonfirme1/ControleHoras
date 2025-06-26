@@ -588,6 +588,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get sector by ID - MUST come after /by-client route
+  app.get("/api/sectors/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid sector ID" });
+      }
+      console.log(`Getting sector with ID: ${id}`);
+      const sector = await storage.getSector(id);
+      console.log(`Found sector:`, sector);
+      if (!sector) {
+        return res.status(404).json({ message: "Sector not found" });
+      }
+      res.json(sector);
+    } catch (error) {
+      console.error("Error fetching sector:", error);
+      res.status(500).json({ message: "Failed to fetch sector" });
+    }
+  });
+
   app.post("/api/sectors", async (req, res) => {
     try {
       const validatedData = insertSectorSchema.parse(req.body);
@@ -810,8 +830,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const enrichedEntries = await Promise.all(timeEntries.map(async (entry) => {
         let sectorInfo = null;
         if (entry.sectorId) {
-          sectorInfo = await storage.getSector(entry.sectorId);
-          console.log(`Sector for entry ${entry.id}: ID ${entry.sectorId} -> `, sectorInfo);
+          try {
+            sectorInfo = await storage.getSector(entry.sectorId);
+            console.log(`Sector lookup for entry ${entry.id}: ID ${entry.sectorId}`, sectorInfo);
+          } catch (error) {
+            console.error(`Error getting sector ${entry.sectorId}:`, error);
+          }
         }
         
         return {
