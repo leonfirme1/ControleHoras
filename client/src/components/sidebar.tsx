@@ -52,10 +52,11 @@ export function Sidebar() {
       )}
       
       {/* Sidebar */}
-      <aside className="
-        w-64 bg-white shadow-lg border-r border-gray-200 h-screen
-        flex flex-col relative z-50
-      ">
+      <aside className={`
+        bg-white shadow-lg border-r border-gray-200 h-screen
+        flex flex-col relative z-50 transition-all duration-300 ease-in-out
+        ${isOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full overflow-hidden'}
+      `}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">

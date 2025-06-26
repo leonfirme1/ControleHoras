@@ -11,14 +11,12 @@ export function Layout({ children, title }: LayoutProps) {
   const { isOpen } = useSidebar();
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50">
       {/* Sidebar with slide animation */}
-      <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'w-64' : 'w-0'}`}>
-        <Sidebar />
-      </div>
+      <Sidebar />
       
-      {/* Main content with smooth transition */}
-      <main className="flex-1 overflow-auto transition-all duration-300 ease-in-out">
+      {/* Main content - static, no movement */}
+      <main className="flex-1 overflow-auto">
         <Header title={title} />
         <div className="p-6">
           {children}
