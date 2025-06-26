@@ -829,22 +829,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeEntries = timeEntries.filter(entry => entry.consultantId === parseInt(consultantId as string));
       }
       
-      // Use database query directly to get sectors by ID
-      const enrichedEntries = await Promise.all(timeEntries.map(async (entry) => {
+      // Enrich entries with sector information - use storage method that works
+      const enrichedEntries = [];
+      for (const entry of timeEntries) {
         let sectorInfo = null;
         if (entry.sectorId) {
-          // Query sector directly from database
-          const sectorResults = await db.select().from(sectorsTable).where(eq(sectorsTable.id, entry.sectorId));
-          if (sectorResults.length > 0) {
-            sectorInfo = sectorResults[0];
+          try {
+            sectorInfo = await storage.getSector(entry.sectorId);
+            console.log(`[FILTERED DEBUG] Entry ${entry.id} sector ${entry.sectorId}:`, sectorInfo);
+          } catch (error) {
+            console.error(`[FILTERED ERROR] Error getting sector ${entry.sectorId}:`, error);
           }
         }
         
-        return {
+        enrichedEntries.push({
           ...entry,
           sector: sectorInfo
-        };
-      }));
+        });
+      }
       
       res.json(enrichedEntries);
     } catch (error) {
