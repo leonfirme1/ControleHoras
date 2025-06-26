@@ -316,7 +316,7 @@ export default function Analytics() {
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="projeto">Projeto</TabsTrigger>
                 <TabsTrigger value="atendimento">Loc. Atend.</TabsTrigger>
-                <TabsTrigger value="setor">Por Setor</TabsTrigger>
+                <TabsTrigger value="setor">Setor</TabsTrigger>
               </TabsList>
 
               <TabsContent value="projeto" className="space-y-4">
