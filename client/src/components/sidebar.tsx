@@ -41,17 +41,15 @@ export function Sidebar() {
   const [location] = useLocation();
   const { isOpen, toggle, close } = useSidebar();
 
-  if (!isOpen) {
-    return null;
-  }
-
   return (
     <>
       {/* Mobile overlay */}
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-        onClick={close}
-      />
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden transition-opacity duration-300"
+          onClick={close}
+        />
+      )}
       
       {/* Sidebar */}
       <aside className="
