@@ -854,7 +854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           entry.consultant.name,
           entry.service.description,
           entry.project || '',
-          `"${entry.description.replace(/"/g, '""')}"`, // Escape quotes
+          `"${(entry.description || '').replace(/"/g, '""')}"`, // Escape quotes
           entry.startTime,
           entry.endTime,
           entry.breakStartTime || '',
