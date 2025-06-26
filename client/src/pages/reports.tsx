@@ -9,20 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileDown, Filter, TrendingUp, Users, Clock, DollarSign, FileText, BarChart3 } from "lucide-react";
 import type { Client, Consultant } from "@shared/schema";
 
-interface ReportData {
-  totalHours: number;
-  totalValue: number;
-  totalEntries: number;
-  totalClients: number;
-  clientBreakdown: Array<{
-    clientId: number;
-    clientName: string;
-    hours: number;
-    value: number;
-    entries: number;
-  }>;
-}
-
 export default function Reports() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -53,216 +39,228 @@ export default function Reports() {
       }
       return response.json();
     },
-    enabled: true,
+    enabled: shouldFetch,
   });
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
+  const handleGenerateReport = () => {
+    setShouldFetch(true);
+    refetch();
   };
 
-  const handleExportExcel = () => {
-    // Implementation for Excel export would go here
-    alert("Exportação para Excel será implementada");
+  const handleExportCSV = () => {
+    if (!reportData) return;
+    
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    if (selectedClient) params.append('clientId', selectedClient);
+    if (selectedConsultant) params.append('consultantId', selectedConsultant);
+    
+    const url = `/api/reports/export?${params}`;
+    window.open(url, '_blank');
   };
 
   const handleExportPDF = () => {
-    // Implementation for PDF export would go here
-    alert("Exportação para PDF será implementada");
+    if (!reportData) return;
+    
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    if (selectedClient) params.append('clientId', selectedClient);
+    if (selectedConsultant) params.append('consultantId', selectedConsultant);
+    
+    const url = `/api/reports/pdf?${params}`;
+    window.open(url, '_blank');
   };
 
   return (
     <Layout title="Relatórios">
       <div className="space-y-6">
-        {/* Filters */}
-        <div className="content-card p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Filtros do Relatório</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Data Inicial</label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full"
-              />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Filtros do Relatório
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="start-date">Data Inicial</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end-date">Data Final</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Data Final</label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Cliente</label>
-              <Select value={selectedClient} onValueChange={setSelectedClient}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os clientes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os clientes</SelectItem>
-                  {clients?.map((client) => (
-                    <SelectItem key={client.id} value={client.id.toString()}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Consultor</label>
-              <Select value={selectedConsultant} onValueChange={setSelectedConsultant}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os consultores" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os consultores</SelectItem>
-                  {consultants?.map((consultant) => (
-                    <SelectItem key={consultant.id} value={consultant.id.toString()}>
-                      {consultant.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="mt-4 flex space-x-4">
-            <Button className="bg-primary hover:bg-blue-700">
-              <Search className="h-4 w-4 mr-2" />
-              Gerar Relatório
-            </Button>
-            <Button 
-              onClick={handleExportExcel}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Exportar Excel
-            </Button>
-            <Button 
-              onClick={handleExportPDF}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Exportar PDF
-            </Button>
-          </div>
-        </div>
 
-        {/* Report Results */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="content-card p-6">
-              <div className="animate-pulse space-y-4">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="h-4 bg-gray-200 rounded"></div>
-                ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Cliente</Label>
+                <Select value={selectedClient} onValueChange={setSelectedClient}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os clientes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos os clientes</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id.toString()}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Consultor</Label>
+                <Select value={selectedConsultant} onValueChange={setSelectedConsultant}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os consultores" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos os consultores</SelectItem>
+                    {consultants.map((consultant) => (
+                      <SelectItem key={consultant.id} value={consultant.id.toString()}>
+                        {consultant.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-            <div className="lg:col-span-2 content-card p-6">
-              <div className="animate-pulse space-y-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-8 bg-gray-200 rounded"></div>
-                ))}
-              </div>
+
+            <div className="flex gap-2 flex-wrap">
+              <Button 
+                onClick={handleGenerateReport} 
+                className="flex items-center gap-2"
+                disabled={isLoading}
+              >
+                <Filter className="h-4 w-4" />
+                {isLoading ? 'Gerando...' : 'Gerar Relatório'}
+              </Button>
+              <Button 
+                onClick={handleExportCSV} 
+                variant="outline" 
+                className="flex items-center gap-2"
+                disabled={!reportData || isLoading}
+              >
+                <FileDown className="h-4 w-4" />
+                Exportar CSV
+              </Button>
+              <Button 
+                onClick={handleExportPDF} 
+                variant="outline" 
+                className="flex items-center gap-2"
+                disabled={!reportData || isLoading}
+              >
+                <FileText className="h-4 w-4" />
+                Exportar PDF
+              </Button>
             </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Summary Cards */}
+          </CardContent>
+        </Card>
+
+        {reportData && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-md">Resumo do Período</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Total de Horas
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Total de Horas:</span>
-                    <span className="text-sm font-semibold">
-                      {reportData?.totalHours?.toFixed(1) || '0.0'}h
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Valor Total:</span>
-                    <span className="text-sm font-semibold text-green-600">
-                      {formatCurrency(reportData?.totalValue || 0)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Número de Lançamentos:</span>
-                    <span className="text-sm font-semibold">
-                      {reportData?.totalEntries || 0}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Clientes Atendidos:</span>
-                    <span className="text-sm font-semibold">
-                      {reportData?.totalClients || 0}
-                    </span>
-                  </div>
-                </div>
+                <div className="text-2xl font-bold">{reportData.totalHours || 0}h</div>
               </CardContent>
             </Card>
 
-            {/* Detailed Report Table */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-md">Detalhamento por Cliente</CardTitle>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Valor Total
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Cliente
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Horas
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Valor
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Lançamentos
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {reportData?.clientBreakdown && reportData.clientBreakdown.length > 0 ? (
-                        reportData.clientBreakdown.map((item) => (
-                          <tr key={item.clientId}>
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                              {item.clientName}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-900">
-                              {item.hours.toFixed(1)}h
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-900">
-                              {formatCurrency(item.value)}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-900">
-                              {item.entries}
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-500">
-                            Nenhum dado encontrado para o período selecionado
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                <div className="text-2xl font-bold">R$ {(reportData.totalValue || 0).toFixed(2)}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Total de Lançamentos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{reportData.totalEntries || 0}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Clientes Atendidos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{reportData.totalClients || 0}</div>
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {reportData && reportData.clientBreakdown && reportData.clientBreakdown.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Detalhamento por Cliente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {reportData.clientBreakdown.map((client: any) => (
+                  <div key={client.clientId} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <div className="font-medium">{client.clientName}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {client.entries} {client.entries === 1 ? 'lançamento' : 'lançamentos'}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">{parseFloat(client.hours || 0).toFixed(2)}h</div>
+                      <div className="text-sm text-muted-foreground">R$ {parseFloat(client.value || 0).toFixed(2)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {shouldFetch && !isLoading && (!reportData || (reportData.totalEntries === 0)) && (
+          <Card>
+            <CardContent className="text-center py-8">
+              <div className="text-muted-foreground">
+                Nenhum dado encontrado para os filtros selecionados.
+              </div>
+              <div className="text-sm text-muted-foreground mt-2">
+                Ajuste os filtros e tente novamente.
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </Layout>
