@@ -911,7 +911,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSector(id: number): Promise<Sector | undefined> {
+    console.log(`[STORAGE DEBUG] Getting sector with ID: ${id}`);
     const [sector] = await db.select().from(sectors).where(eq(sectors.id, id));
+    console.log(`[STORAGE DEBUG] Found sector:`, sector);
     return sector || undefined;
   }
 

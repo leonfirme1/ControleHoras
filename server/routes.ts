@@ -826,23 +826,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeEntries = timeEntries.filter(entry => entry.consultantId === parseInt(consultantId as string));
       }
       
+      // Get all sectors at once for better performance
+      const allSectors = await storage.getSectors();
+      const sectorMap = new Map();
+      allSectors.forEach(sector => {
+        sectorMap.set(sector.id, sector);
+      });
+      
       // Enrich entries with sector information
-      const enrichedEntries = await Promise.all(timeEntries.map(async (entry) => {
+      const enrichedEntries = timeEntries.map(entry => {
         let sectorInfo = null;
-        if (entry.sectorId) {
-          try {
-            sectorInfo = await storage.getSector(entry.sectorId);
-            console.log(`Sector lookup for entry ${entry.id}: ID ${entry.sectorId}`, sectorInfo);
-          } catch (error) {
-            console.error(`Error getting sector ${entry.sectorId}:`, error);
-          }
+        if (entry.sectorId && sectorMap.has(entry.sectorId)) {
+          sectorInfo = sectorMap.get(entry.sectorId);
         }
         
         return {
           ...entry,
           sector: sectorInfo
         };
-      }));
+      });
       
       res.json(enrichedEntries);
     } catch (error) {
