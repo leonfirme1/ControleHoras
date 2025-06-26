@@ -375,7 +375,9 @@ export default function Analytics() {
                           <YAxis />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend />
-                          <Bar dataKey="hours" fill="#8884d8" name="Horas" />
+                          <Bar dataKey="hours" fill="#8884d8" name="Horas">
+                            <LabelList dataKey="hours" position="center" fill="white" fontSize={12} fontWeight="bold" />
+                          </Bar>
                         </BarChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -393,7 +395,10 @@ export default function Analytics() {
                           <YAxis />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend />
-                          <Bar dataKey="value" fill="#82ca9d" name="Valor (R$)" />
+                          <Bar dataKey="value" fill="#82ca9d" name="Valor (R$)">
+                            <LabelList dataKey="value" position="center" fill="white" fontSize={11} fontWeight="bold" 
+                              formatter={(value: number) => `R$ ${value.toFixed(0)}`} />
+                          </Bar>
                         </BarChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -473,7 +478,9 @@ export default function Analytics() {
                           <YAxis />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend />
-                          <Bar dataKey="hours" fill="#ffc658" name="Horas" />
+                          <Bar dataKey="hours" fill="#ffc658" name="Horas">
+                            <LabelList dataKey="hours" position="center" fill="white" fontSize={12} fontWeight="bold" />
+                          </Bar>
                         </BarChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -491,7 +498,10 @@ export default function Analytics() {
                           <YAxis />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend />
-                          <Bar dataKey="value" fill="#ff7300" name="Valor (R$)" />
+                          <Bar dataKey="value" fill="#ff7300" name="Valor (R$)">
+                            <LabelList dataKey="value" position="center" fill="white" fontSize={11} fontWeight="bold" 
+                              formatter={(value: number) => `R$ ${value.toFixed(0)}`} />
+                          </Bar>
                         </BarChart>
                       </ResponsiveContainer>
                     </CardContent>
