@@ -134,6 +134,7 @@ export type TimeEntryDetailed = TimeEntry & {
   consultant: Consultant;
   client: Client;
   service: Service;
+  sector?: Sector | null;
 };
 
 // Relations

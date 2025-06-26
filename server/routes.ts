@@ -786,6 +786,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Time entries filtered endpoint for analytics with complete sector info
+  app.get("/api/time-entries/filtered", async (req, res) => {
+    try {
+      const { startDate, endDate, clientId, consultantId } = req.query;
+      
+      // Get time entries in date range
+      let timeEntries = await storage.getTimeEntriesByDateRange(
+        startDate as string || '1900-01-01',
+        endDate as string || '2100-12-31'
+      );
+      
+      // Filter by client and consultant if specified
+      if (clientId && clientId !== 'all') {
+        timeEntries = timeEntries.filter(entry => entry.clientId === parseInt(clientId as string));
+      }
+      
+      if (consultantId && consultantId !== 'all') {
+        timeEntries = timeEntries.filter(entry => entry.consultantId === parseInt(consultantId as string));
+      }
+      
+      // Enrich entries with sector information
+      const enrichedEntries = await Promise.all(timeEntries.map(async (entry) => {
+        let sectorInfo = null;
+        if (entry.sectorId) {
+          sectorInfo = await storage.getSector(entry.sectorId);
+        }
+        
+        return {
+          ...entry,
+          sector: sectorInfo
+        };
+      }));
+      
+      res.json(enrichedEntries);
+    } catch (error) {
+      console.error("Error fetching filtered time entries:", error);
+      res.status(500).json({ message: "Failed to fetch filtered time entries" });
+    }
+  });
+
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {
     try {
