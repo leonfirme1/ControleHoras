@@ -158,16 +158,16 @@ export default function Reports() {
               <Button 
                 onClick={handleGenerateReport} 
                 className="flex items-center gap-2"
-                disabled={isLoading}
+                disabled={reportLoading}
               >
                 <Filter className="h-4 w-4" />
-                {isLoading ? 'Gerando...' : 'Gerar Relatório'}
+                {reportLoading ? 'Gerando...' : 'Gerar Relatório'}
               </Button>
               <Button 
                 onClick={handleExportCSV} 
                 variant="outline" 
                 className="flex items-center gap-2"
-                disabled={!reportData || isLoading}
+                disabled={!reportData || reportLoading}
               >
                 <FileDown className="h-4 w-4" />
                 Exportar CSV
@@ -176,7 +176,7 @@ export default function Reports() {
                 onClick={handleExportPDF} 
                 variant="outline" 
                 className="flex items-center gap-2"
-                disabled={!reportData || isLoading}
+                disabled={!reportData || reportLoading}
               >
                 <FileText className="h-4 w-4" />
                 Exportar PDF
@@ -263,7 +263,7 @@ export default function Reports() {
           </Card>
         )}
 
-        {shouldFetch && !isLoading && (!reportData || (reportData.totalEntries === 0)) && (
+        {shouldFetch && !reportLoading && (!reportData || (reportData.totalEntries === 0)) && (
           <Card>
             <CardContent className="text-center py-8">
               <div className="text-muted-foreground">
