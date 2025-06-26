@@ -183,10 +183,10 @@ export default function Analytics() {
       if (entry.serviceTypeId && serviceTypes) {
         const serviceType = serviceTypes.find((st: ServiceType) => st.id === entry.serviceTypeId);
         if (serviceType) {
-          // Abbreviate to 4 characters
-          serviceTypeName = serviceType.description.substring(0, 4).toUpperCase();
+          // Use code field instead of description
+          serviceTypeName = serviceType.code;
         } else {
-          serviceTypeName = `T${entry.serviceTypeId}`.substring(0, 4);
+          serviceTypeName = `T${entry.serviceTypeId}`;
         }
       } else {
         serviceTypeName = 'NULO';
@@ -537,6 +537,26 @@ export default function Analytics() {
                     </CardContent>
                   </Card>
                 </div>
+                
+                {/* Legend for Service Types */}
+                {serviceTypes && serviceTypes.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Legenda - Tipos de Atendimento</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+                        {serviceTypes.map((serviceType) => (
+                          <div key={serviceType.id} className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-primary">{serviceType.code}</span>
+                            <span>-</span>
+                            <span className="text-gray-600">{serviceType.description}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
             </Tabs>
 
