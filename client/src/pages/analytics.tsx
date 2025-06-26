@@ -132,13 +132,18 @@ export default function Analytics() {
       value: parseFloat(data.value.toFixed(2))
     }));
 
-    // Group by sector using actual sector names
-    const sectorGroups = timeEntries.reduce((acc: any, entry: TimeEntryDetailed) => {
+    // Group by sector using sector information from time entries
+    const sectorGroups = timeEntries.reduce((acc: any, entry: any) => {
       let sectorName = 'Sem Setor';
-      if (entry.sectorId && sectors.length > 0) {
-        const sector = sectors.find((s: any) => s.id === entry.sectorId);
-        sectorName = sector ? sector.name : `Setor ${entry.sectorId}`;
+      
+      // Check if entry has sector information (from filtered endpoint)
+      if (entry.sector && entry.sector.name) {
+        sectorName = entry.sector.name;
+      } else if (entry.sectorId) {
+        // Fallback to sector ID if sector object not available
+        sectorName = `Setor ${entry.sectorId}`;
       }
+      
       if (!acc[sectorName]) {
         acc[sectorName] = { hours: 0, value: 0 };
       }

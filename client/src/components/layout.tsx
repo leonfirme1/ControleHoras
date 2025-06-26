@@ -14,8 +14,8 @@ export function Layout({ children, title }: LayoutProps) {
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <main className={`
-        flex-1 overflow-auto transition-all duration-300 ease-in-out
-        ${isOpen ? 'ml-64' : 'ml-0'}
+        flex-1 overflow-auto transition-all duration-300 ease-in-out lg:ml-64
+        ${isOpen ? 'lg:ml-64' : 'lg:ml-64'}
       `}>
         <Header title={title} />
         <div className="p-6">

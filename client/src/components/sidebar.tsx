@@ -1,20 +1,17 @@
 import { Link, useLocation } from "wouter";
 import { 
-  Clock, 
   BarChart3, 
+  PlusCircle, 
+  CheckSquare, 
   Users, 
   Settings, 
   UserCheck, 
-  PlusCircle, 
-  ChartBar,
-  CheckSquare,
-  Building,
-  HeadphonesIcon,
+  Building, 
+  HeadphonesIcon, 
+  ChartBar, 
+  TrendingUp,
   LucideIcon,
-  ChevronLeft,
-  PanelLeftClose,
-  Receipt,
-  TrendingUp
+  PanelLeftClose 
 } from "lucide-react";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { Button } from "@/components/ui/button";
@@ -42,42 +39,45 @@ const navigation: NavigationItem[] = [
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { isOpen, close, toggle } = useSidebar();
+  const { isOpen, toggle } = useSidebar();
 
   return (
     <>
-      {/* Overlay for mobile - only close when clicking outside on very small screens */}
+      {/* Mobile overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={close}
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={toggle}
         />
       )}
       
       {/* Sidebar */}
-      <div 
-        className={`fixed left-0 top-0 z-50 h-full w-64 transform bg-slate-900 text-white transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:relative md:translate-x-0`}
-      >
+      <aside className={`
+        fixed top-0 left-0 z-50 h-screen w-64 bg-gradient-to-b from-blue-900 to-blue-800 text-white shadow-xl
+        transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-700 p-4">
-          <h2 className="text-lg font-semibold">Gestão de Horas</h2>
+        <div className="flex items-center justify-between p-4 border-b border-blue-700">
+          <div>
+            <h1 className="text-xl font-bold">Gestão de Horas</h1>
+            <p className="text-blue-200 text-sm">Sistema de Controle</p>
+          </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={toggle}
-            className="text-slate-400 hover:text-white"
+            className="text-blue-200 hover:text-white hover:bg-blue-700"
           >
-            <PanelLeftClose className="h-4 w-4" />
+            <PanelLeftClose className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-4">
+        <nav className="flex-1 px-4 py-6 space-y-2">
           {navigation.map((item, index) => {
             if (item.name === "separator") {
-              return <hr key={`separator-${index}`} className="my-3 border-slate-700" />;
+              return <hr key={`separator-${index}`} className="my-4 border-blue-700" />;
             }
 
             const Icon = item.icon;
@@ -86,20 +86,25 @@ export function Sidebar() {
             return (
               <Link key={item.name} href={item.href}>
                 <div
-                  className={`flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                    isActive
-                      ? 'bg-slate-800 text-white'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                  }`}
+                  className={`
+                    flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium 
+                    transition-all duration-200 cursor-pointer group
+                    ${isActive 
+                      ? 'bg-blue-700 text-white shadow-md' 
+                      : 'text-blue-100 hover:bg-blue-700/50 hover:text-white'
+                    }
+                  `}
                   onClick={() => {
                     // Close sidebar on mobile after navigation
-                    if (window.innerWidth < 768) {
-                      close();
+                    if (window.innerWidth < 1024) {
+                      toggle();
                     }
                   }}
                 >
-                  {Icon && <Icon className="h-5 w-5" />}
-                  <span>{item.name}</span>
+                  {Icon && (
+                    <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-blue-300 group-hover:text-white'}`} />
+                  )}
+                  <span className="truncate">{item.name}</span>
                 </div>
               </Link>
             );
@@ -107,12 +112,12 @@ export function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-slate-700 p-4">
-          <div className="text-xs text-slate-400">
-            Sistema de Gestão v1.0
+        <div className="p-4 border-t border-blue-700">
+          <div className="text-xs text-blue-300">
+            © 2025 Sistema de Gestão
           </div>
         </div>
-      </div>
+      </aside>
     </>
   );
 }
