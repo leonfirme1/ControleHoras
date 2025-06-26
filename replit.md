@@ -95,6 +95,8 @@ This is a full-stack time management application built with a modern React front
 
 ```
 Changelog:
+- June 26, 2025. Added Analytics module with interactive charts using Recharts - filters by client/period/consultant, visualization by project/service type/sector
+- June 26, 2025. Fixed Reports CSV export to use semicolon separator and auto-fill current month dates
 - June 26, 2025. Removed Billing module and enhanced Reports with CSV/PDF export functionality
 - June 25, 2025. Added Billing module with invoice generation, PDF export, and activity grouping (later removed)
 - June 25, 2025. Reverted /clock configuration, back to root path deployment
