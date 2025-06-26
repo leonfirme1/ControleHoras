@@ -136,11 +136,14 @@ export default function Analytics() {
     const sectorGroups = timeEntries.reduce((acc: any, entry: any) => {
       let sectorName = 'Sem Setor';
       
+      // Debug log to see what data we're getting
+      console.log('Entry sector data:', { sectorId: entry.sectorId, sector: entry.sector });
+      
       // Check if entry has sector information (from filtered endpoint)
       if (entry.sector && entry.sector.description) {
         sectorName = entry.sector.description;
       } else if (entry.sectorId) {
-        // Fallback to sector ID if sector object not available
+        // Fallback using sector ID
         sectorName = `Setor ${entry.sectorId}`;
       }
       
