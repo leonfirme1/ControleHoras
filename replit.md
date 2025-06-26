@@ -48,8 +48,7 @@ This is a full-stack time management application built with a modern React front
 - **Dashboard**: Overview with statistics and charts
 - **Time Entries**: Main form for logging work hours
 - **Activities**: Management view for existing time entries
-- **Billing**: Invoice generation with client selection, period filtering, and PDF export
-- **Reports**: Data analysis and export functionality
+- **Reports**: Comprehensive data analysis with filtering, CSV export, and PDF export functionality
 - **Master Data**: CRUD interfaces for clients, services, consultants, sectors, service types
 
 ## Data Flow
@@ -96,7 +95,8 @@ This is a full-stack time management application built with a modern React front
 
 ```
 Changelog:
-- June 25, 2025. Added Billing module with invoice generation, PDF export, and activity grouping
+- June 26, 2025. Removed Billing module and enhanced Reports with CSV/PDF export functionality
+- June 25, 2025. Added Billing module with invoice generation, PDF export, and activity grouping (later removed)
 - June 25, 2025. Reverted /clock configuration, back to root path deployment
 - June 24, 2025. Initial setup
 ```

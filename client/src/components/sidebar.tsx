@@ -36,7 +36,6 @@ const navigation: NavigationItem[] = [
   { name: "Tipo Atendimento", href: "/service-types", icon: HeadphonesIcon },
   { name: "separator", href: "", icon: null },
   { name: "Relatórios", href: "/reports", icon: ChartBar },
-  { name: "Faturamento", href: "/billing", icon: Receipt },
 ];
 
 export function Sidebar() {

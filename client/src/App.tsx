@@ -15,7 +15,7 @@ import ServiceTypes from "@/pages/service-types";
 import TimeEntries from "@/pages/time-entries";
 import Activities from "@/pages/activities";
 import Reports from "@/pages/reports";
-import Billing from "@/pages/billing";
+
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
 

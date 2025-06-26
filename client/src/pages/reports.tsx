@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { type Client, type Consultant } from "@shared/schema";
-import { Search, FileSpreadsheet, FileText } from "lucide-react";
+import { FileDown, Filter, TrendingUp, Users, Clock, DollarSign, FileText, BarChart3 } from "lucide-react";
+import type { Client, Consultant } from "@shared/schema";
 
 interface ReportData {
   totalHours: number;

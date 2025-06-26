@@ -3,6 +3,111 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 
 // PDF generation function using simple text format
+function generateReportPDF(data: any): Buffer {
+  const { jsPDF } = require('jspdf');
+  
+  try {
+    const doc = new jsPDF();
+    
+    // Set font
+    doc.setFont('helvetica');
+    
+    // Title
+    doc.setFontSize(16);
+    doc.text(data.title || 'RELATÓRIO DE ATIVIDADES', 20, 20);
+    
+    // Filters info
+    doc.setFontSize(12);
+    doc.text(`Cliente: ${data.client || 'N/A'}`, 20, 35);
+    doc.text(`Consultor: ${data.consultant || 'N/A'}`, 20, 45);
+    doc.text(`Período: ${data.period || 'N/A'}`, 20, 55);
+    
+    let yPosition = 75;
+    
+    // Summary section
+    if (data.summary) {
+      doc.setFontSize(14);
+      doc.text('RESUMO GERAL', 20, yPosition);
+      yPosition += 15;
+      
+      doc.setFontSize(11);
+      doc.text(`Total de Horas: ${data.totalHours || 0}h`, 20, yPosition);
+      doc.text(`Valor Total: R$ ${data.totalValue || '0.00'}`, 20, yPosition + 10);
+      doc.text(`Total de Lançamentos: ${data.summary.totalEntries || 0}`, 20, yPosition + 20);
+      doc.text(`Clientes Atendidos: ${data.summary.totalClients || 0}`, 20, yPosition + 30);
+      
+      yPosition += 50;
+      
+      // Client breakdown
+      if (data.summary.clientBreakdown && data.summary.clientBreakdown.length > 0) {
+        doc.setFontSize(14);
+        doc.text('DETALHAMENTO POR CLIENTE', 20, yPosition);
+        yPosition += 15;
+        
+        doc.setFontSize(10);
+        data.summary.clientBreakdown.forEach((client: any) => {
+          if (yPosition > 260) {
+            doc.addPage();
+            yPosition = 20;
+          }
+          
+          doc.text(`${client.clientName}`, 20, yPosition);
+          doc.text(`${parseFloat(client.hours || 0).toFixed(2)}h | R$ ${parseFloat(client.value || 0).toFixed(2)} | ${client.entries} lançamentos`, 25, yPosition + 8);
+          yPosition += 20;
+        });
+        
+        yPosition += 15;
+      }
+    }
+    
+    // Detailed entries
+    if (data.entries && data.entries.length > 0) {
+      if (yPosition > 200) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      
+      doc.setFontSize(14);
+      doc.text('DETALHAMENTO DAS ATIVIDADES', 20, yPosition);
+      yPosition += 15;
+      
+      doc.setFontSize(9);
+      
+      data.entries.forEach((entry: any, index: number) => {
+        if (yPosition > 260) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        doc.text(`${index + 1}. ${entry.date} - ${entry.client} - ${entry.consultant}`, 20, yPosition);
+        doc.text(`Serviço: ${entry.service} | Projeto: ${entry.project || 'N/A'}`, 25, yPosition + 8);
+        doc.text(`Horas: ${entry.hours}h | Valor: R$ ${entry.value} | Concluída: ${entry.completed}`, 25, yPosition + 16);
+        
+        // Split description into lines if too long
+        const description = entry.description || 'Sem descrição';
+        const lines = doc.splitTextToSize(description, 160);
+        doc.text(`Descrição: ${lines[0]}`, 25, yPosition + 24);
+        if (lines.length > 1) {
+          doc.text(lines.slice(1), 25, yPosition + 32);
+          yPosition += 8 * (lines.length - 1);
+        }
+        
+        yPosition += 45;
+      });
+    }
+    
+    return Buffer.from(doc.output('arraybuffer'));
+    
+  } catch (error) {
+    console.error('Error generating report PDF:', error);
+    // Return a simple PDF with error message
+    const doc = new (require('jspdf').jsPDF)();
+    doc.text('Erro ao gerar PDF do relatório', 20, 20);
+    doc.text(`Erro: ${(error as Error).message}`, 20, 35);
+    return Buffer.from(doc.output('arraybuffer'));
+  }
+}
+
 function generatePDFContent(data: any): Buffer {
   const content = generateInvoiceText(data);
   
@@ -693,20 +798,167 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Reports
-  app.get("/api/reports", async (req, res) => {
+  // Reports routes
+  app.get("/api/reports/data", async (req, res) => {
     try {
+      const { startDate, endDate, clientId, consultantId } = req.query;
+      
       const filters = {
-        startDate: req.query.startDate as string,
-        endDate: req.query.endDate as string,
-        clientId: req.query.clientId ? parseInt(req.query.clientId as string) : undefined,
-        consultantId: req.query.consultantId ? parseInt(req.query.consultantId as string) : undefined,
+        startDate: startDate as string,
+        endDate: endDate as string,
+        clientId: clientId ? parseInt(clientId as string) : undefined,
+        consultantId: consultantId ? parseInt(consultantId as string) : undefined,
       };
       
       const reportData = await storage.getReportData(filters);
       res.json(reportData);
     } catch (error) {
+      console.error("Error generating report:", error);
       res.status(500).json({ message: "Failed to generate report" });
+    }
+  });
+
+  // Export CSV route
+  app.get("/api/reports/export", async (req, res) => {
+    try {
+      const { startDate, endDate, clientId, consultantId } = req.query;
+      
+      const filters = {
+        startDate: startDate as string,
+        endDate: endDate as string,
+        clientId: clientId ? parseInt(clientId as string) : undefined,
+        consultantId: consultantId ? parseInt(consultantId as string) : undefined,
+      };
+      
+      // Get time entries data for export
+      const timeEntries = await storage.getTimeEntriesByDateRange(
+        filters.startDate || '1900-01-01',
+        filters.endDate || '2100-12-31'
+      );
+      
+      // Filter by client and consultant if specified
+      const filteredEntries = timeEntries.filter(entry => {
+        if (filters.clientId && entry.clientId !== filters.clientId) return false;
+        if (filters.consultantId && entry.consultantId !== filters.consultantId) return false;
+        return true;
+      });
+
+      // Generate CSV content
+      const csvHeader = 'Data,Cliente,Consultor,Serviço,Projeto,Descrição,Início,Fim,Pausa Início,Pausa Fim,Horas Totais,Valor Total,Atividade Concluída,Local\n';
+      
+      const csvRows = filteredEntries.map(entry => {
+        const date = new Date(entry.date + 'T00:00:00').toLocaleDateString('pt-BR');
+        const fields = [
+          date,
+          entry.client.name,
+          entry.consultant.name,
+          entry.service.description,
+          entry.project || '',
+          `"${entry.description.replace(/"/g, '""')}"`, // Escape quotes
+          entry.startTime,
+          entry.endTime,
+          entry.breakStartTime || '',
+          entry.breakEndTime || '',
+          entry.totalHours,
+          entry.totalValue,
+          entry.activityCompleted === 'sim' ? 'Sim' : 'Não',
+          entry.serviceLocation
+        ];
+        return fields.join(',');
+      }).join('\n');
+
+      const csvContent = csvHeader + csvRows;
+      const filename = `relatorio_atividades_${Date.now()}.csv`;
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Length', Buffer.byteLength(csvContent, 'utf8').toString());
+      
+      // Add BOM for proper UTF-8 encoding in Excel
+      res.write('\ufeff');
+      res.end(csvContent);
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+      res.status(500).json({ message: "Failed to export CSV" });
+    }
+  });
+
+  // Export PDF route
+  app.get("/api/reports/pdf", async (req, res) => {
+    try {
+      const { startDate, endDate, clientId, consultantId } = req.query;
+      
+      const filters = {
+        startDate: startDate as string,
+        endDate: endDate as string,
+        clientId: clientId ? parseInt(clientId as string) : undefined,
+        consultantId: consultantId ? parseInt(consultantId as string) : undefined,
+      };
+      
+      // Get report data
+      const reportData = await storage.getReportData(filters);
+      
+      // Get time entries data for detailed PDF
+      const timeEntries = await storage.getTimeEntriesByDateRange(
+        filters.startDate || '1900-01-01',
+        filters.endDate || '2100-12-31'
+      );
+      
+      // Filter by client and consultant if specified
+      const filteredEntries = timeEntries.filter(entry => {
+        if (filters.clientId && entry.clientId !== filters.clientId) return false;
+        if (filters.consultantId && entry.consultantId !== filters.consultantId) return false;
+        return true;
+      });
+
+      // Get client name for title
+      const clientName = filters.clientId ? 
+        (await storage.getClient(filters.clientId))?.name || 'Cliente não encontrado' :
+        'Todos os clientes';
+      
+      const consultantName = filters.consultantId ?
+        (await storage.getConsultant(filters.consultantId))?.name || 'Consultor não encontrado' :
+        'Todos os consultores';
+
+      const pdfData = {
+        type: 'report',
+        title: 'Relatório de Atividades',
+        client: clientName,
+        consultant: consultantName,
+        period: `${filters.startDate ? new Date(filters.startDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Início'} a ${filters.endDate ? new Date(filters.endDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Fim'}`,
+        summary: reportData,
+        entries: filteredEntries.map(entry => ({
+          date: new Date(entry.date + 'T00:00:00').toLocaleDateString('pt-BR'),
+          client: entry.client.name,
+          consultant: entry.consultant.name,
+          service: entry.service.description,
+          project: entry.project || '',
+          description: entry.description,
+          hours: entry.totalHours,
+          value: entry.totalValue,
+          completed: entry.activityCompleted === 'sim' ? 'Sim' : 'Não'
+        })),
+        totalHours: reportData.totalHours?.toFixed(2) || '0.00',
+        totalValue: reportData.totalValue?.toFixed(2) || '0.00'
+      };
+
+      console.log('Generating PDF report with data:', JSON.stringify(pdfData, null, 2));
+      
+      const pdfBuffer = generateReportPDF(pdfData);
+      
+      if (!pdfBuffer || pdfBuffer.length === 0) {
+        return res.status(500).json({ message: 'Erro ao gerar PDF: buffer vazio' });
+      }
+      
+      const filename = `relatorio_${Date.now()}.pdf`;
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      res.status(500).json({ message: "Failed to export PDF" });
     }
   });
 
