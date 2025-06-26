@@ -314,7 +314,7 @@ export default function Analytics() {
             {/* Charts */}
             <Tabs defaultValue="projeto" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="projeto">Por Projeto</TabsTrigger>
+                <TabsTrigger value="projeto">Projeto</TabsTrigger>
                 <TabsTrigger value="atendimento">Por Tipo de Atendimento</TabsTrigger>
                 <TabsTrigger value="setor">Por Setor</TabsTrigger>
               </TabsList>
