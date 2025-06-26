@@ -9,6 +9,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileDown, Filter, TrendingUp, Users, Clock, DollarSign, FileText, BarChart3 } from "lucide-react";
 import type { Client, Consultant } from "@shared/schema";
 
+interface ReportData {
+  totalHours: number;
+  totalValue: number;
+  totalEntries: number;
+  totalClients: number;
+  clientBreakdown: Array<{
+    clientId: number;
+    clientName: string;
+    hours: number;
+    value: number;
+    entries: number;
+  }>;
+}
+
 export default function Reports() {
   console.log("Reports component rendering...");
   
