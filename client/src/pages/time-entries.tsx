@@ -196,28 +196,17 @@ export default function TimeEntries() {
   const handleEdit = (entry: TimeEntryDetailed) => {
     setEditingEntry(entry);
     
-    // Load client services first if we have the client
-    if (entry.clientId) {
-      fetch(`/api/services/by-client/${entry.clientId}`)
-        .then(res => res.json())
-        .then(services => {
-          setClientServices(services);
-        })
-        .catch(() => {
-          setClientServices([]);
-        });
-    }
-    
     // Ensure date is in correct format (YYYY-MM-DD) to avoid timezone issues
     const correctDate = entry.date.includes('T') ? entry.date.split('T')[0] : entry.date;
     
-    // Reset form with all data, ensuring date is properly set
+    // Reset form with basic data first
     const formData = {
       date: correctDate,
       consultantId: entry.consultantId,
       clientId: entry.clientId,
-      serviceId: entry.serviceId,
+      serviceId: 0, // Set to 0 initially, will be set after services load
       sectorId: entry.sectorId || null,
+      serviceTypeId: entry.serviceTypeId || null,
       startTime: entry.startTime,
       endTime: entry.endTime,
       breakStartTime: entry.breakStartTime || "00:00",
@@ -230,23 +219,31 @@ export default function TimeEntries() {
       serviceLocation: entry.serviceLocation || "",
     };
     
-    // Force reset and then set values individually to ensure all fields are updated
     form.reset(formData);
     
-    // Explicitly set the date field to ensure it's loaded with correct format
-    setTimeout(() => {
-      form.setValue('date', correctDate);
-      form.setValue('consultantId', entry.consultantId);
-      form.setValue('clientId', entry.clientId);
-      form.setValue('serviceId', entry.serviceId);
-      if (entry.sectorId) {
-        form.setValue('sectorId', entry.sectorId);
-      }
-    }, 50);
+    // Load client services and then set the service after services are loaded
+    if (entry.clientId) {
+      fetch(`/api/services/by-client/${entry.clientId}`)
+        .then(res => res.json())
+        .then(services => {
+          setClientServices(services);
+          // Set the service ID after services are loaded
+          setTimeout(() => {
+            form.setValue('serviceId', entry.serviceId);
+            // Find and set the selected service
+            const service = services.find((s: Service) => s.id === entry.serviceId);
+            if (service) {
+              setSelectedService(service);
+            }
+          }, 100);
+        })
+        .catch(() => {
+          setClientServices([]);
+        });
+    }
     
-    // Set calculated values
-    if (entry.service) {
-      setSelectedService(entry.service);
+    // Set calculated values if available
+    if (entry.totalHours && entry.totalValue) {
       const hours = parseFloat(entry.totalHours);
       const value = parseFloat(entry.totalValue);
       setCalculatedHours(hours);
