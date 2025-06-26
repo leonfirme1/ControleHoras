@@ -183,10 +183,13 @@ export default function Analytics() {
       if (entry.serviceTypeId && serviceTypes) {
         const serviceType = serviceTypes.find((st: ServiceType) => st.id === entry.serviceTypeId);
         if (serviceType) {
-          serviceTypeName = serviceType.description;
+          // Abbreviate to 4 characters
+          serviceTypeName = serviceType.description.substring(0, 4).toUpperCase();
         } else {
-          serviceTypeName = `Tipo ${entry.serviceTypeId}`;
+          serviceTypeName = `T${entry.serviceTypeId}`.substring(0, 4);
         }
+      } else {
+        serviceTypeName = 'NULO';
       }
       
       if (!acc[serviceTypeName]) {
