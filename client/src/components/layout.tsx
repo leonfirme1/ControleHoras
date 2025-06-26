@@ -12,14 +12,11 @@ export function Layout({ children, title }: LayoutProps) {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar container - only shows when open */}
-      {isOpen && <Sidebar />}
+      {/* Sidebar - rendered conditionally */}
+      <Sidebar />
       
-      {/* Main content - takes full width when sidebar is closed */}
-      <main className={`
-        flex-1 overflow-auto transition-all duration-300 ease-in-out
-        ${isOpen ? '' : 'ml-0'}
-      `}>
+      {/* Main content - always takes remaining space */}
+      <main className="flex-1 overflow-auto">
         <Header title={title} />
         <div className="p-6">
           {children}
