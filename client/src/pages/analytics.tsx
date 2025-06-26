@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LabelList } from 'recharts';
 import { BarChart3, Clock, DollarSign, TrendingUp, Users } from "lucide-react";
 import type { Client, Consultant, TimeEntryDetailed, ServiceType } from "@shared/schema";
 
@@ -513,7 +513,9 @@ export default function Analytics() {
                           <YAxis />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend />
-                          <Bar dataKey="hours" fill="#8884d8" name="Horas" />
+                          <Bar dataKey="hours" fill="#8884d8" name="Horas">
+                            <LabelList dataKey="hours" position="center" fill="white" fontSize={12} fontWeight="bold" />
+                          </Bar>
                         </BarChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -531,7 +533,10 @@ export default function Analytics() {
                           <YAxis />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend />
-                          <Bar dataKey="value" fill="#82ca9d" name="Valor (R$)" />
+                          <Bar dataKey="value" fill="#82ca9d" name="Valor (R$)">
+                            <LabelList dataKey="value" position="center" fill="white" fontSize={11} fontWeight="bold" 
+                              formatter={(value: number) => `R$ ${value.toFixed(0)}`} />
+                          </Bar>
                         </BarChart>
                       </ResponsiveContainer>
                     </CardContent>

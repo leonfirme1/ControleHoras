@@ -95,7 +95,7 @@ This is a full-stack time management application built with a modern React front
 
 ```
 Changelog:
-- June 26, 2025. Added new Analytics chart for Service Type (Tipo de Atendimento) - displays service type descriptions abbreviated to 4 characters, follows same visual pattern as other charts
+- June 26, 2025. Enhanced Analytics Service Type chart - now displays CODE field from service_types table, includes explanatory legend showing CODE - DESCRIPTION mapping, and displays values inside each bar for better readability
 - June 26, 2025. Fixed service field loading issue in edit mode - corrected timing in handleEdit function to load client services before setting serviceId, ensuring "Serviço" field is properly populated when editing activities from Manutenção page
 - June 26, 2025. Updated "Cancelar Edição" button styling with red background color (bg-[#ed6d6d]) for better visual distinction
 - June 26, 2025. Successfully deployed application to production
