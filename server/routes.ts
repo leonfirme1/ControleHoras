@@ -1,6 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
+import { sectors as sectorsTable } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 // PDF generation function using simple text format
 function generateReportPDF(data: any): Buffer {
@@ -826,25 +829,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeEntries = timeEntries.filter(entry => entry.consultantId === parseInt(consultantId as string));
       }
       
-      // Get all sectors at once for better performance
-      const allSectors = await storage.getSectors();
-      const sectorMap = new Map();
-      allSectors.forEach(sector => {
-        sectorMap.set(sector.id, sector);
-      });
-      
-      // Enrich entries with sector information
-      const enrichedEntries = timeEntries.map(entry => {
+      // Use database query directly to get sectors by ID
+      const enrichedEntries = await Promise.all(timeEntries.map(async (entry) => {
         let sectorInfo = null;
-        if (entry.sectorId && sectorMap.has(entry.sectorId)) {
-          sectorInfo = sectorMap.get(entry.sectorId);
+        if (entry.sectorId) {
+          // Query sector directly from database
+          const sectorResults = await db.select().from(sectorsTable).where(eq(sectorsTable.id, entry.sectorId));
+          if (sectorResults.length > 0) {
+            sectorInfo = sectorResults[0];
+          }
         }
         
         return {
           ...entry,
           sector: sectorInfo
         };
-      });
+      }));
       
       res.json(enrichedEntries);
     } catch (error) {
