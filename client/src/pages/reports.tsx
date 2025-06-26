@@ -10,23 +10,26 @@ import { FileDown, Filter, TrendingUp, Users, Clock, DollarSign, FileText, BarCh
 import type { Client, Consultant } from "@shared/schema";
 
 export default function Reports() {
+  console.log("Reports component rendering...");
+  
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [selectedClient, setSelectedClient] = useState<string>("");
   const [selectedConsultant, setSelectedConsultant] = useState<string>("");
   const [shouldFetch, setShouldFetch] = useState(false);
 
-  const { data: clients = [] } = useQuery<Client[]>({
+  const { data: clients = [], isLoading: clientsLoading } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
   });
 
-  const { data: consultants = [] } = useQuery<Consultant[]>({
+  const { data: consultants = [], isLoading: consultantsLoading } = useQuery<Consultant[]>({
     queryKey: ["/api/consultants"],
   });
 
-  const { data: reportData, isLoading, refetch } = useQuery({
+  const { data: reportData, isLoading: reportLoading, refetch } = useQuery({
     queryKey: ["/api/reports/data"],
     queryFn: async () => {
+      console.log("Fetching report data...");
       const params = new URLSearchParams();
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
@@ -40,6 +43,16 @@ export default function Reports() {
       return response.json();
     },
     enabled: shouldFetch,
+  });
+
+  console.log("Reports state:", { 
+    clientsLoading, 
+    consultantsLoading, 
+    reportLoading, 
+    clientsCount: clients.length, 
+    consultantsCount: consultants.length,
+    shouldFetch,
+    reportData 
   });
 
   const handleGenerateReport = () => {
