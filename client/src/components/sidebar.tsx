@@ -8,7 +8,7 @@ import {
   UserCheck, 
   Building, 
   HeadphonesIcon, 
-  ChartBar, 
+  FileText, 
   TrendingUp,
   LucideIcon,
   PanelLeftClose 
@@ -33,7 +33,7 @@ const navigation: NavigationItem[] = [
   { name: "Setor", href: "/sectors", icon: Building },
   { name: "Tipo Atendimento", href: "/service-types", icon: HeadphonesIcon },
   { name: "separator", href: "", icon: null },
-  { name: "Relatórios", href: "/reports", icon: ChartBar },
+  { name: "Relatórios", href: "/reports", icon: FileText },
   { name: "Analytics", href: "/analytics", icon: TrendingUp },
 ];
 
@@ -53,31 +53,35 @@ export function Sidebar() {
       
       {/* Sidebar */}
       <aside className={`
-        fixed top-0 left-0 z-50 h-screen w-64 bg-gradient-to-b from-blue-900 to-blue-800 text-white shadow-xl
+        fixed top-0 left-0 z-50 h-screen w-64 bg-white shadow-lg border-r border-gray-200
         transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-blue-700">
-          <div>
-            <h1 className="text-xl font-bold">Gestão de Horas</h1>
-            <p className="text-blue-200 text-sm">Sistema de Controle</p>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h1 className="text-lg font-semibold text-gray-900">Gestão Horas</h1>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={toggle}
-            className="text-blue-200 hover:text-white hover:bg-blue-700"
+            className="text-gray-400 hover:text-gray-600"
           >
             <PanelLeftClose className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        <nav className="flex-1 px-3 py-4 space-y-1">
           {navigation.map((item, index) => {
             if (item.name === "separator") {
-              return <hr key={`separator-${index}`} className="my-4 border-blue-700" />;
+              return <hr key={`separator-${index}`} className="my-3 border-gray-200" />;
             }
 
             const Icon = item.icon;
@@ -87,11 +91,11 @@ export function Sidebar() {
               <Link key={item.name} href={item.href}>
                 <div
                   className={`
-                    flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium 
-                    transition-all duration-200 cursor-pointer group
+                    flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium 
+                    transition-all duration-200 cursor-pointer
                     ${isActive 
-                      ? 'bg-blue-700 text-white shadow-md' 
-                      : 'text-blue-100 hover:bg-blue-700/50 hover:text-white'
+                      ? 'bg-blue-600 text-white shadow-sm' 
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }
                   `}
                   onClick={() => {
@@ -102,7 +106,7 @@ export function Sidebar() {
                   }}
                 >
                   {Icon && (
-                    <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-blue-300 group-hover:text-white'}`} />
+                    <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
                   )}
                   <span className="truncate">{item.name}</span>
                 </div>
@@ -110,13 +114,6 @@ export function Sidebar() {
             );
           })}
         </nav>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-blue-700">
-          <div className="text-xs text-blue-300">
-            © 2025 Sistema de Gestão
-          </div>
-        </div>
       </aside>
     </>
   );
