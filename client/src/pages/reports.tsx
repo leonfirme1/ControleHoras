@@ -26,8 +26,19 @@ interface ReportData {
 export default function Reports() {
   console.log("Reports component rendering...");
   
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  // Get current month dates
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const firstDay = new Date(currentYear, currentMonth, 1);
+  const lastDay = new Date(currentYear, currentMonth + 1, 0);
+  
+  const formatDate = (date: Date) => {
+    return date.toISOString().split('T')[0];
+  };
+  
+  const [startDate, setStartDate] = useState(formatDate(firstDay));
+  const [endDate, setEndDate] = useState(formatDate(lastDay));
   const [selectedClient, setSelectedClient] = useState<string>("all");
   const [selectedConsultant, setSelectedConsultant] = useState<string>("all");
   const [shouldFetch, setShouldFetch] = useState(false);
