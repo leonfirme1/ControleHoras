@@ -843,8 +843,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return true;
       });
 
-      // Generate CSV content
-      const csvHeader = 'Data,Cliente,Consultor,Serviço,Projeto,Descrição,Início,Fim,Pausa Início,Pausa Fim,Horas Totais,Valor Total,Atividade Concluída,Local\n';
+      // Generate CSV content with semicolon separator
+      const csvHeader = 'Data;Cliente;Consultor;Serviço;Projeto;Descrição;Início;Fim;Pausa Início;Pausa Fim;Horas Totais;Valor Total;Atividade Concluída;Local\n';
       
       const csvRows = filteredEntries.map(entry => {
         const date = new Date(entry.date + 'T00:00:00').toLocaleDateString('pt-BR');
@@ -864,7 +864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           entry.activityCompleted === 'sim' ? 'Sim' : 'Não',
           entry.serviceLocation
         ];
-        return fields.join(',');
+        return fields.join(';');
       }).join('\n');
 
       const csvContent = csvHeader + csvRows;
