@@ -997,6 +997,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(consultants, eq(timeEntries.consultantId, consultants.id))
       .leftJoin(clients, eq(timeEntries.clientId, clients.id))
       .leftJoin(services, eq(timeEntries.serviceId, services.id))
+      .leftJoin(sectors, eq(timeEntries.sectorId, sectors.id))
       .where(and(gte(timeEntries.date, startDate), lte(timeEntries.date, endDate)));
 
     return result.map((row) => ({
@@ -1004,6 +1005,7 @@ export class DatabaseStorage implements IStorage {
       consultant: row.consultants!,
       client: row.clients!,
       service: row.services!,
+      sector: row.sectors || null,
     }));
   }
 

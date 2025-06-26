@@ -829,26 +829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeEntries = timeEntries.filter(entry => entry.consultantId === parseInt(consultantId as string));
       }
       
-      // Enrich entries with sector information - use storage method that works
-      const enrichedEntries = [];
-      for (const entry of timeEntries) {
-        let sectorInfo = null;
-        if (entry.sectorId) {
-          try {
-            sectorInfo = await storage.getSector(entry.sectorId);
-            console.log(`[FILTERED DEBUG] Entry ${entry.id} sector ${entry.sectorId}:`, sectorInfo);
-          } catch (error) {
-            console.error(`[FILTERED ERROR] Error getting sector ${entry.sectorId}:`, error);
-          }
-        }
-        
-        enrichedEntries.push({
-          ...entry,
-          sector: sectorInfo
-        });
-      }
-      
-      res.json(enrichedEntries);
+      res.json(timeEntries);
     } catch (error) {
       console.error("Error fetching filtered time entries:", error);
       res.status(500).json({ message: "Failed to fetch filtered time entries" });
