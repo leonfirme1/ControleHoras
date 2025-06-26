@@ -15,6 +15,7 @@ import ServiceTypes from "@/pages/service-types";
 import TimeEntries from "@/pages/time-entries";
 import Activities from "@/pages/activities";
 import Reports from "@/pages/reports";
+import Analytics from "@/pages/analytics";
 
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
@@ -98,6 +99,7 @@ function Router() {
         <Route path="/time-entries" component={TimeEntries} />
         <Route path="/activities" component={Activities} />
         <Route path="/reports" component={Reports} />
+        <Route path="/analytics" component={Analytics} />
 
         <Route component={NotFound} />
       </Switch>

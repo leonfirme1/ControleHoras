@@ -13,7 +13,8 @@ import {
   LucideIcon,
   ChevronLeft,
   PanelLeftClose,
-  Receipt
+  Receipt,
+  TrendingUp
 } from "lucide-react";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ const navigation: NavigationItem[] = [
   { name: "Tipo Atendimento", href: "/service-types", icon: HeadphonesIcon },
   { name: "separator", href: "", icon: null },
   { name: "Relatórios", href: "/reports", icon: ChartBar },
+  { name: "Analytics", href: "/analytics", icon: TrendingUp },
 ];
 
 export function Sidebar() {
@@ -51,58 +53,66 @@ export function Sidebar() {
           onClick={close}
         />
       )}
+      
       {/* Sidebar */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50
-        w-64 bg-white shadow-lg
-        transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-800 flex items-center">
-            <Clock className="text-primary mr-2 h-6 w-6" />
-            <span className="truncate text-[18px]">Gestão Horas</span>
-          </h1>
+      <div 
+        className={`fixed left-0 top-0 z-50 h-full w-64 transform bg-slate-900 text-white transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:relative md:translate-x-0`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-700 p-4">
+          <h2 className="text-lg font-semibold">Gestão de Horas</h2>
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 hover:bg-gray-100"
-            onClick={toggle}
-            title="Ocultar menu lateral"
+            onClick={close}
+            className="text-slate-400 hover:text-white md:hidden"
           >
-            <PanelLeftClose className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
           </Button>
         </div>
-        
-        <nav className="mt-6 pb-6 overflow-y-auto">
-          <ul className="space-y-2 px-4">
-            {navigation.map((item, index) => {
-              if (item.name === "separator") {
-                return (
-                  <li key={`separator-${index}`} className="py-2">
-                    <div className="border-t border-gray-200"></div>
-                  </li>
-                );
-              }
-              
-              const isActive = location === item.href;
-              const Icon = item.icon;
-              
-              return (
-                <li key={item.name}>
-                  <Link 
-                    href={item.href} 
-                    className={`nav-item ${isActive ? 'active' : ''}`}
-                  >
-                    {Icon ? <Icon className="h-5 w-5 flex-shrink-0" /> : null}
-                    <span className="truncate">{item.name}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+
+        {/* Navigation */}
+        <nav className="flex-1 space-y-1 p-4">
+          {navigation.map((item) => {
+            if (item.name === "separator") {
+              return <hr key={item.name} className="my-3 border-slate-700" />;
+            }
+
+            const Icon = item.icon;
+            const isActive = location === item.href;
+
+            return (
+              <Link key={item.name} href={item.href}>
+                <a
+                  className={`flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-slate-800 text-white'
+                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  }`}
+                  onClick={() => {
+                    // Close sidebar on mobile after navigation
+                    if (window.innerWidth < 768) {
+                      close();
+                    }
+                  }}
+                >
+                  {Icon && <Icon className="h-5 w-5" />}
+                  <span>{item.name}</span>
+                </a>
+              </Link>
+            );
+          })}
         </nav>
-      </aside>
+
+        {/* Footer */}
+        <div className="border-t border-slate-700 p-4">
+          <div className="text-xs text-slate-400">
+            Sistema de Gestão v1.0
+          </div>
+        </div>
+      </div>
     </>
   );
 }
