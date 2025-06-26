@@ -409,7 +409,7 @@ export default function TimeEntries() {
                     variant="outline"
                     size="sm"
                     onClick={resetForm}
-                    className="mt-2"
+                    className="mt-2 bg-[#ed6d6d]"
                   >
                     Cancelar Edição
                   </Button>
