@@ -639,7 +639,7 @@ export default function TimeEntries() {
                           <SelectItem value="none">Sem projeto específico</SelectItem>
                           {clientProjects?.map((project) => (
                             <SelectItem key={project.id} value={project.id.toString()}>
-                              {project.name} - {project.status}
+                              {project.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
