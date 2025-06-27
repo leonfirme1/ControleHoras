@@ -35,9 +35,9 @@ export function Header({ title }: HeaderProps) {
           <h2 className="text-2xl font-semibold text-gray-800">{title}</h2>
         </div>
         <div className="flex items-center space-x-4">
-          <Button onClick={handleNewEntry} className="bg-primary hover:bg-blue-700">
+          <Button onClick={handleNewEntry} className="bg-primary hover:bg-blue-700 pl-[5px] pr-[5px]">
             <Plus className="h-4 w-4 mr-2" />
-            Novo Lançamento
+            Registro 
           </Button>
           <div className="flex items-center space-x-2">
             <UserCircle className="h-8 w-8 text-gray-600" />
