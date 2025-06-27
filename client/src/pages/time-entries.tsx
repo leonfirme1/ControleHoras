@@ -420,7 +420,7 @@ export default function TimeEntries() {
     return name.split(' ').map(word => word.charAt(0)).join('').substring(0, 2).toUpperCase();
   };
 
-  if (entriesLoading || clientsLoading || consultantsLoading || sectorsLoading || serviceTypesLoading) {
+  if (entriesLoading || clientsLoading || consultantsLoading || sectorsLoading || serviceTypesLoading || projectsLoading) {
     return (
       <Layout title="Lançamento de Horas">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
