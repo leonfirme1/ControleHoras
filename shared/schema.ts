@@ -73,7 +73,6 @@ export const timeEntries = pgTable("time_entries", {
   activityCompleted: text("activity_completed"), // "sim" or "nao"
   deliveryForecast: text("delivery_forecast"), // YYYY-MM-DD format
   actualDelivery: text("actual_delivery"), // YYYY-MM-DD format
-  project: text("project"),
   serviceLocation: text("service_location"), // "presencial" or "remoto"
 });
 

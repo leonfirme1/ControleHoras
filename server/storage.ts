@@ -412,7 +412,6 @@ export class MemStorage implements IStorage {
       activityCompleted: "Implementação completa do módulo de vendas",
       deliveryForecast: null,
       actualDelivery: null,
-      project: null,
       serviceLocation: null,
       totalHours: "8.00",
       totalValue: "1136.00"
@@ -435,7 +434,6 @@ export class MemStorage implements IStorage {
       activityCompleted: "Revisão e otimização dos processos de faturamento",
       deliveryForecast: null,
       actualDelivery: null,
-      project: null,
       serviceLocation: null,
       totalHours: "8.00",
       totalValue: "1136.00"
@@ -458,7 +456,6 @@ export class MemStorage implements IStorage {
       activityCompleted: "Sistema atualizado e funcionando perfeitamente",
       deliveryForecast: null,
       actualDelivery: null,
-      project: null,
       serviceLocation: null,
       totalHours: "8.00",
       totalValue: "1136.00"

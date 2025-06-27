@@ -82,7 +82,6 @@ export default function TimeEntries() {
       activityCompleted: "",
       deliveryForecast: "",
       actualDelivery: "",
-      project: "",
       serviceLocation: "",
     },
   });
@@ -192,7 +191,6 @@ export default function TimeEntries() {
       activityCompleted: "",
       deliveryForecast: "",
       actualDelivery: "",
-      project: "",
       serviceLocation: "",
     });
     setCalculatedHours(0);
@@ -227,7 +225,6 @@ export default function TimeEntries() {
       activityCompleted: entry.activityCompleted || "",
       deliveryForecast: entry.deliveryForecast || "",
       actualDelivery: entry.actualDelivery || "",
-      project: entry.project || "",
       serviceLocation: entry.serviceLocation || "",
     };
     
