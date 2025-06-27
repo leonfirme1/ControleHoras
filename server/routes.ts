@@ -847,6 +847,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/projects/by-client/:clientId", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      const projects = await storage.getProjectsByClient(clientId);
+      res.json(projects);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch projects by client" });
+    }
+  });
+
   app.get("/api/projects/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

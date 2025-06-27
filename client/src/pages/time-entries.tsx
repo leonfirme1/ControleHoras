@@ -16,7 +16,8 @@ import {
   type Consultant, 
   type Service,
   type Sector,
-  type ServiceType
+  type ServiceType,
+  type Project
 } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Save, Edit, Trash2, Eye, EyeOff } from "lucide-react";
@@ -28,6 +29,7 @@ export default function TimeEntries() {
   const [calculatedValue, setCalculatedValue] = useState(0);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [clientServices, setClientServices] = useState<Service[]>([]);
+  const [clientProjects, setClientProjects] = useState<Project[]>([]);
   const [editingEntry, setEditingEntry] = useState<TimeEntryDetailed | null>(null);
   const [showFinancialValues, setShowFinancialValues] = useState(false);
   const { toast } = useToast();
@@ -53,6 +55,10 @@ export default function TimeEntries() {
     queryKey: ["/api/service-types"],
   });
 
+  const { data: projects, isLoading: projectsLoading } = useQuery<Project[]>({
+    queryKey: ["/api/projects"],
+  });
+
   // Find the current user's consultant ID
   const currentConsultant = consultants?.find(c => c.id === user?.id);
   const defaultConsultantId = currentConsultant?.id || 0;
@@ -66,6 +72,7 @@ export default function TimeEntries() {
       serviceId: 0,
       sectorId: null,
       serviceTypeId: null,
+      projectId: null,
       startTime: "00:00",
       endTime: "00:00",
       breakStartTime: "00:00",
@@ -189,6 +196,7 @@ export default function TimeEntries() {
     setCalculatedValue(0);
     setSelectedService(null);
     setClientServices([]);
+    setClientProjects([]);
     setEditingEntry(null);
   };
 
@@ -265,9 +273,10 @@ export default function TimeEntries() {
   const watchedBreakEndTime = form.watch("breakEndTime");
   const watchedServiceId = form.watch("serviceId");
 
-  // Load services when client changes
+  // Load services and projects when client changes
   useEffect(() => {
     if (watchedClientId) {
+      // Load services
       fetch(`/api/services/by-client/${watchedClientId}`)
         .then(res => res.json())
         .then(services => {
@@ -278,9 +287,22 @@ export default function TimeEntries() {
         .catch(() => {
           setClientServices([]);
         });
+
+      // Load projects
+      fetch(`/api/projects/by-client/${watchedClientId}`)
+        .then(res => res.json())
+        .then(projects => {
+          setClientProjects(projects);
+          form.setValue("projectId", null);
+        })
+        .catch(() => {
+          setClientProjects([]);
+        });
     } else {
       setClientServices([]);
+      setClientProjects([]);
       form.setValue("serviceId", 0);
+      form.setValue("projectId", null);
       setSelectedService(null);
     }
   }, [watchedClientId, form]);
@@ -563,6 +585,31 @@ export default function TimeEntries() {
                           {serviceTypes?.map((serviceType) => (
                             <SelectItem key={serviceType.id} value={serviceType.id.toString()}>
                               {serviceType.code} - {serviceType.description}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="projectId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Projeto (opcional)</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value === "none" ? null : parseInt(value))} value={field.value?.toString() || "none"}>
+                        <FormControl>
+                          <SelectTrigger tabIndex={7}>
+                            <SelectValue placeholder="Selecione um projeto (opcional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">Sem projeto específico</SelectItem>
+                          {clientProjects?.map((project) => (
+                            <SelectItem key={project.id} value={project.id.toString()}>
+                              {project.name} - {project.status}
                             </SelectItem>
                           ))}
                         </SelectContent>

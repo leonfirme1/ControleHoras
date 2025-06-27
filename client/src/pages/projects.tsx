@@ -80,10 +80,22 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
+const formatDate = (dateString: string | null) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+};
+
 export default function Projects() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<ProjectWithClient | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [clientFilter, setClientFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -244,11 +256,16 @@ export default function Projects() {
     setIsDialogOpen(true);
   };
 
-  const filteredProjects = projects.filter(project =>
-    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.status.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesClient = !clientFilter || clientFilter === "all" || project.clientId.toString() === clientFilter;
+    const matchesStatus = !statusFilter || statusFilter === "all" || project.status === statusFilter;
+    
+    return matchesSearch && matchesClient && matchesStatus;
+  });
 
   if (projectsLoading || clientsLoading) {
     return (
@@ -274,6 +291,32 @@ export default function Projects() {
                 className="pl-8 w-64"
               />
             </div>
+            <Select value={clientFilter} onValueChange={setClientFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filtrar por cliente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os clientes</SelectItem>
+                {clients.map((client) => (
+                  <SelectItem key={client.id} value={client.id.toString()}>
+                    {client.code} - {client.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filtrar por situação" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as situações</SelectItem>
+                {statusOptions.map((status) => (
+                  <SelectItem key={status.value} value={status.value}>
+                    {status.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -531,10 +574,10 @@ export default function Projects() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {project.plannedStartDate || "-"}
+                          {formatDate(project.plannedStartDate)}
                         </TableCell>
                         <TableCell>
-                          {project.plannedEndDate || "-"}
+                          {formatDate(project.plannedEndDate)}
                         </TableCell>
                         <TableCell>
                           {project.plannedHours ? `${project.plannedHours}h` : "-"}
