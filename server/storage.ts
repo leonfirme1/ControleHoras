@@ -563,7 +563,6 @@ export class MemStorage implements IStorage {
       activityCompleted: insertTimeEntry.activityCompleted || null,
       deliveryForecast: insertTimeEntry.deliveryForecast || null,
       actualDelivery: insertTimeEntry.actualDelivery || null,
-      project: insertTimeEntry.project || null,
       serviceLocation: insertTimeEntry.serviceLocation || null,
       totalHours: hours.toString(),
       totalValue: value.toString()
