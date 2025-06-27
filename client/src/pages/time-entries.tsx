@@ -55,9 +55,10 @@ export default function TimeEntries() {
     queryKey: ["/api/service-types"],
   });
 
-  const { data: projects, isLoading: projectsLoading } = useQuery<Project[]>({
-    queryKey: ["/api/projects"],
-  });
+  // Projects are loaded dynamically when client is selected
+  // const { data: projects, isLoading: projectsLoading } = useQuery<Project[]>({
+  //   queryKey: ["/api/projects"],
+  // });
 
   // Find the current user's consultant ID
   const currentConsultant = consultants?.find(c => c.id === user?.id);
@@ -420,7 +421,7 @@ export default function TimeEntries() {
     return name.split(' ').map(word => word.charAt(0)).join('').substring(0, 2).toUpperCase();
   };
 
-  if (entriesLoading || clientsLoading || consultantsLoading || sectorsLoading || serviceTypesLoading || projectsLoading) {
+  if (entriesLoading || clientsLoading || consultantsLoading || sectorsLoading || serviceTypesLoading) {
     return (
       <Layout title="Lançamento de Horas">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
