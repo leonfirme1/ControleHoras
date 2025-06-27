@@ -5,21 +5,25 @@ import {
   sectors,
   serviceTypes,
   timeEntries,
+  projects,
   type Client, 
   type Consultant, 
   type Service, 
   type Sector,
   type ServiceType,
   type TimeEntry,
+  type Project,
   type InsertClient, 
   type InsertConsultant, 
   type InsertService, 
   type InsertSector,
   type InsertServiceType,
   type InsertTimeEntry,
+  type InsertProject,
   type ServiceWithClient,
   type SectorWithClient,
   type TimeEntryDetailed,
+  type ProjectWithClient,
   type LoginData
 } from "@shared/schema";
 import { db } from "./db";
@@ -68,6 +72,14 @@ export interface IStorage {
   createServiceType(serviceType: InsertServiceType): Promise<ServiceType>;
   updateServiceType(id: number, serviceType: Partial<InsertServiceType>): Promise<ServiceType | undefined>;
   deleteServiceType(id: number): Promise<boolean>;
+
+  // Projects
+  getProjects(): Promise<ProjectWithClient[]>;
+  getProject(id: number): Promise<Project | undefined>;
+  getProjectsByClient(clientId: number): Promise<Project[]>;
+  createProject(project: InsertProject): Promise<Project>;
+  updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined>;
+  deleteProject(id: number): Promise<boolean>;
 
   // Time Entries
   getTimeEntries(): Promise<TimeEntryDetailed[]>;
@@ -747,6 +759,66 @@ export class MemStorage implements IStorage {
     };
   }
 
+  // Projects
+  async getProjects(): Promise<ProjectWithClient[]> {
+    const result = await db.select({
+      id: projects.id,
+      clientId: projects.clientId,
+      name: projects.name,
+      status: projects.status,
+      plannedStartDate: projects.plannedStartDate,
+      plannedEndDate: projects.plannedEndDate,
+      actualStartDate: projects.actualStartDate,
+      actualEndDate: projects.actualEndDate,
+      plannedHours: projects.plannedHours,
+      generalObservations: projects.generalObservations,
+      description: projects.description,
+      createdAt: projects.createdAt,
+      client: {
+        id: clients.id,
+        code: clients.code,
+        name: clients.name,
+        cnpj: clients.cnpj,
+        email: clients.email,
+      }
+    }).from(projects)
+      .leftJoin(clients, eq(projects.clientId, clients.id))
+      .orderBy(projects.id);
+
+    return result.map(row => ({
+      ...row,
+      client: row.client!
+    }));
+  }
+
+  async getProject(id: number): Promise<Project | undefined> {
+    const [project] = await db.select().from(projects).where(eq(projects.id, id));
+    return project || undefined;
+  }
+
+  async getProjectsByClient(clientId: number): Promise<Project[]> {
+    return await db.select().from(projects).where(eq(projects.clientId, clientId));
+  }
+
+  async createProject(insertProject: InsertProject): Promise<Project> {
+    const projectData = {
+      ...insertProject,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    const [project] = await db.insert(projects).values(projectData).returning();
+    return project;
+  }
+
+  async updateProject(id: number, updateData: Partial<InsertProject>): Promise<Project | undefined> {
+    const [project] = await db.update(projects).set(updateData).where(eq(projects.id, id)).returning();
+    return project || undefined;
+  }
+
+  async deleteProject(id: number): Promise<boolean> {
+    const result = await db.delete(projects).where(eq(projects.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
   // Authentication
   async authenticateConsultant(loginData: LoginData): Promise<Consultant | null> {
     const consultant = await this.getConsultantByCode(loginData.code);
@@ -832,6 +904,66 @@ export class DatabaseStorage implements IStorage {
 
   async deleteConsultant(id: number): Promise<boolean> {
     const result = await db.delete(consultants).where(eq(consultants.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Projects
+  async getProjects(): Promise<ProjectWithClient[]> {
+    const result = await db.select({
+      id: projects.id,
+      clientId: projects.clientId,
+      name: projects.name,
+      status: projects.status,
+      plannedStartDate: projects.plannedStartDate,
+      plannedEndDate: projects.plannedEndDate,
+      actualStartDate: projects.actualStartDate,
+      actualEndDate: projects.actualEndDate,
+      plannedHours: projects.plannedHours,
+      generalObservations: projects.generalObservations,
+      description: projects.description,
+      createdAt: projects.createdAt,
+      client: {
+        id: clients.id,
+        code: clients.code,
+        name: clients.name,
+        cnpj: clients.cnpj,
+        email: clients.email,
+      }
+    }).from(projects)
+      .leftJoin(clients, eq(projects.clientId, clients.id))
+      .orderBy(projects.id);
+
+    return result.map(row => ({
+      ...row,
+      client: row.client!
+    }));
+  }
+
+  async getProject(id: number): Promise<Project | undefined> {
+    const [project] = await db.select().from(projects).where(eq(projects.id, id));
+    return project || undefined;
+  }
+
+  async getProjectsByClient(clientId: number): Promise<Project[]> {
+    return await db.select().from(projects).where(eq(projects.clientId, clientId));
+  }
+
+  async createProject(insertProject: InsertProject): Promise<Project> {
+    const projectData = {
+      ...insertProject,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    const [project] = await db.insert(projects).values(projectData).returning();
+    return project;
+  }
+
+  async updateProject(id: number, updateData: Partial<InsertProject>): Promise<Project | undefined> {
+    const [project] = await db.update(projects).set(updateData).where(eq(projects.id, id)).returning();
+    return project || undefined;
+  }
+
+  async deleteProject(id: number): Promise<boolean> {
+    const result = await db.delete(projects).where(eq(projects.id, id));
     return (result.rowCount ?? 0) > 0;
   }
 

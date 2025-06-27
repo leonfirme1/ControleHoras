@@ -12,6 +12,7 @@ import Services from "@/pages/services";
 import Consultants from "@/pages/consultants";
 import Sectors from "@/pages/sectors";
 import ServiceTypes from "@/pages/service-types";
+import Projects from "@/pages/projects";
 import TimeEntries from "@/pages/time-entries";
 import Activities from "@/pages/activities";
 import Reports from "@/pages/reports";
@@ -96,6 +97,7 @@ function Router() {
         <Route path="/consultants" component={Consultants} />
         <Route path="/sectors" component={Sectors} />
         <Route path="/service-types" component={ServiceTypes} />
+        <Route path="/projects" component={Projects} />
         <Route path="/time-entries" component={TimeEntries} />
         <Route path="/activities" component={Activities} />
         <Route path="/reports" component={Reports} />
