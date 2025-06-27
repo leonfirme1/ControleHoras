@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LabelList } from 'recharts';
 import { BarChart3, Clock, DollarSign, TrendingUp, Users } from "lucide-react";
-import type { Client, Consultant, TimeEntryDetailed, ServiceType } from "@shared/schema";
+import type { Client, Consultant, TimeEntryDetailed, ServiceType, Project } from "@shared/schema";
 
 // Colors for charts
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
@@ -74,6 +74,10 @@ export default function Analytics() {
     queryKey: ["/api/service-types"],
   });
 
+  const { data: projects = [] } = useQuery<Project[]>({
+    queryKey: ["/api/projects"],
+  });
+
   const { data: timeEntries = [], isLoading: entriesLoading } = useQuery({
     queryKey: ["/api/time-entries/filtered", startDate, endDate, selectedClient, selectedConsultant],
     queryFn: async () => {
@@ -108,14 +112,25 @@ export default function Analytics() {
   };
 
   if (timeEntries && timeEntries.length > 0) {
-    // Group by project
+    // Group by project using projectId to find project name
     const projectGroups = timeEntries.reduce((acc: any, entry: TimeEntryDetailed) => {
-      const project = entry.project || 'Sem Projeto';
-      if (!acc[project]) {
-        acc[project] = { hours: 0, value: 0 };
+      let projectName = 'Sem Projeto';
+      
+      // Check if entry has project information
+      if (entry.projectId && projects && projects.length > 0) {
+        const project = projects.find((p: Project) => p.id === entry.projectId);
+        if (project) {
+          projectName = project.name;
+        } else {
+          projectName = `Projeto ${entry.projectId}`;
+        }
       }
-      acc[project].hours += parseFloat(entry.totalHours || '0');
-      acc[project].value += parseFloat(entry.totalValue || '0');
+      
+      if (!acc[projectName]) {
+        acc[projectName] = { hours: 0, value: 0 };
+      }
+      acc[projectName].hours += parseFloat(entry.totalHours || '0');
+      acc[projectName].value += parseFloat(entry.totalValue || '0');
       return acc;
     }, {});
 
