@@ -181,6 +181,8 @@ export default function TimeEntries() {
       clientId: 0,
       serviceId: 0,
       sectorId: null,
+      serviceTypeId: null,
+      projectId: null,
       startTime: "00:00",
       endTime: "00:00",
       breakStartTime: "00:00",
@@ -215,6 +217,7 @@ export default function TimeEntries() {
       serviceId: 0, // Set to 0 initially, will be set after services load
       sectorId: entry.sectorId || null,
       serviceTypeId: entry.serviceTypeId || null,
+      projectId: entry.projectId || null, // Include projectId in form data
       startTime: entry.startTime,
       endTime: entry.endTime,
       breakStartTime: entry.breakStartTime || "00:00",
