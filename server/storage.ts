@@ -362,11 +362,11 @@ export class MemStorage implements IStorage {
 
   private addSampleData() {
     // Sample clients
-    this.clients.set(1, { id: 1, code: "CLI001", name: "SkyStoneBrasil", hourlyRate: 142 });
-    this.clients.set(2, { id: 2, code: "CLI002", name: "TechCorp", hourlyRate: 120 });
-    this.clients.set(3, { id: 3, code: "CLI003", name: "InnovaSoft", hourlyRate: 150 });
-    this.clients.set(4, { id: 4, code: "CLI004", name: "DataFlow Solutions", hourlyRate: 135 });
-    this.clients.set(5, { id: 5, code: "CLI005", name: "CloudTech", hourlyRate: 160 });
+    this.clients.set(1, { id: 1, code: "CLI001", name: "SkyStoneBrasil", cnpj: "12.345.678/0001-90", email: "contato@skystone.com.br" });
+    this.clients.set(2, { id: 2, code: "CLI002", name: "TechCorp", cnpj: "98.765.432/0001-10", email: "contato@techcorp.com" });
+    this.clients.set(3, { id: 3, code: "CLI003", name: "InnovaSoft", cnpj: "11.222.333/0001-44", email: "contato@innovasoft.com" });
+    this.clients.set(4, { id: 4, code: "CLI004", name: "DataFlow Solutions", cnpj: "55.666.777/0001-88", email: "contato@dataflow.com" });
+    this.clients.set(5, { id: 5, code: "CLI005", name: "CloudTech", cnpj: "99.888.777/0001-66", email: "contato@cloudtech.com" });
     this.currentClientId = 6;
 
     // Sample consultants
@@ -376,9 +376,9 @@ export class MemStorage implements IStorage {
     this.currentConsultantId = 4;
 
     // Sample services
-    this.services.set(1, { id: 1, code: "DEV001", description: "Desenvolvimento de Sistema ERP", clientId: 1, hourlyRate: 142 });
-    this.services.set(2, { id: 2, code: "CONS001", description: "Consultoria em Processos", clientId: 1, hourlyRate: 142 });
-    this.services.set(3, { id: 3, code: "SUP001", description: "Suporte Técnico", clientId: 2, hourlyRate: 120 });
+    this.services.set(1, { id: 1, code: "DEV001", description: "Desenvolvimento de Sistema ERP", clientId: 1, hourlyRate: "142" });
+    this.services.set(2, { id: 2, code: "CONS001", description: "Consultoria em Processos", clientId: 1, hourlyRate: "142" });
+    this.services.set(3, { id: 3, code: "SUP001", description: "Suporte Técnico", clientId: 2, hourlyRate: "120" });
     this.currentServiceId = 4;
 
     // Sample sectors

@@ -159,6 +159,7 @@ export type TimeEntryDetailed = TimeEntry & {
   client: Client;
   service: Service;
   sector?: Sector | null;
+  project?: Project | null;
   projectName?: string | null;
 };
 
