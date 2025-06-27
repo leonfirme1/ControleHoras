@@ -229,8 +229,9 @@ export default function TimeEntries() {
     
     form.reset(formData);
     
-    // Load client services and then set the service after services are loaded
+    // Load client services and projects, then set values after they are loaded
     if (entry.clientId) {
+      // Load services
       fetch(`/api/services/by-client/${entry.clientId}`)
         .then(res => res.json())
         .then(services => {
@@ -247,6 +248,32 @@ export default function TimeEntries() {
         })
         .catch(() => {
           setClientServices([]);
+        });
+
+      // Load projects (only ANDAMENTO and PLANEJADO)
+      fetch(`/api/projects/by-client/${entry.clientId}`)
+        .then(res => res.json())
+        .then(projects => {
+          const filteredProjects = projects.filter((project: any) => 
+            project.status === "ANDAMENTO" || project.status === "PLANEJADO"
+          );
+          setClientProjects(filteredProjects);
+          
+          // Set project ID only if the project is still eligible
+          if (entry.projectId) {
+            const isProjectEligible = filteredProjects.some((p: any) => p.id === entry.projectId);
+            if (isProjectEligible) {
+              setTimeout(() => {
+                form.setValue('projectId', entry.projectId);
+              }, 100);
+            } else {
+              // Clear project if it's no longer eligible
+              form.setValue('projectId', null);
+            }
+          }
+        })
+        .catch(() => {
+          setClientProjects([]);
         });
     }
     
@@ -288,11 +315,14 @@ export default function TimeEntries() {
           setClientServices([]);
         });
 
-      // Load projects
+      // Load projects (only ANDAMENTO and PLANEJADO)
       fetch(`/api/projects/by-client/${watchedClientId}`)
         .then(res => res.json())
         .then(projects => {
-          setClientProjects(projects);
+          const filteredProjects = projects.filter((project: any) => 
+            project.status === "ANDAMENTO" || project.status === "PLANEJADO"
+          );
+          setClientProjects(filteredProjects);
           form.setValue("projectId", null);
         })
         .catch(() => {
