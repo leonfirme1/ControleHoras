@@ -299,9 +299,9 @@ export default function Activities() {
                           <span className="truncate block">{activity.service.description}</span>
                         </TableCell>
                         <TableCell>
-                          {activity.project ? (
+                          {activity.projectName ? (
                             <Badge variant="secondary" className="text-xs">
-                              {activity.project}
+                              {activity.projectName}
                             </Badge>
                           ) : (
                             <span className="text-gray-400">-</span>

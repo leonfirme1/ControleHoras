@@ -160,6 +160,7 @@ export type TimeEntryDetailed = TimeEntry & {
   client: Client;
   service: Service;
   sector?: Sector | null;
+  projectName?: string | null;
 };
 
 // Relations

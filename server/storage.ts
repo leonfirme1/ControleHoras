@@ -1111,13 +1111,15 @@ export class DatabaseStorage implements IStorage {
       .from(timeEntries)
       .leftJoin(consultants, eq(timeEntries.consultantId, consultants.id))
       .leftJoin(clients, eq(timeEntries.clientId, clients.id))
-      .leftJoin(services, eq(timeEntries.serviceId, services.id));
+      .leftJoin(services, eq(timeEntries.serviceId, services.id))
+      .leftJoin(projects, eq(timeEntries.projectId, projects.id));
 
     return result.map((row) => ({
       ...row.time_entries,
       consultant: row.consultants!,
       client: row.clients!,
       service: row.services!,
+      projectName: row.projects?.name || null,
     }));
   }
 
@@ -1134,6 +1136,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(clients, eq(timeEntries.clientId, clients.id))
       .leftJoin(services, eq(timeEntries.serviceId, services.id))
       .leftJoin(sectors, eq(timeEntries.sectorId, sectors.id))
+      .leftJoin(projects, eq(timeEntries.projectId, projects.id))
       .where(and(gte(timeEntries.date, startDate), lte(timeEntries.date, endDate)));
 
     return result.map((row) => ({
@@ -1142,6 +1145,7 @@ export class DatabaseStorage implements IStorage {
       client: row.clients!,
       service: row.services!,
       sector: row.sectors || null,
+      projectName: row.projects?.name || null,
     }));
   }
 
