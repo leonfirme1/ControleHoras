@@ -781,14 +781,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/time-entries/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`[API DEBUG] Updating time entry ${id} with data:`, req.body);
+      
       const validatedData = insertTimeEntrySchema.partial().parse(req.body);
+      console.log(`[API DEBUG] Validated data:`, validatedData);
       
       const timeEntry = await storage.updateTimeEntry(id, validatedData);
       if (!timeEntry) {
         return res.status(404).json({ message: "Time entry not found" });
       }
+      
+      console.log(`[API DEBUG] Updated time entry result:`, timeEntry);
       res.json(timeEntry);
     } catch (error) {
+      console.error(`[API DEBUG] Error updating time entry ${req.params.id}:`, error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid data", errors: error.errors });
       } else {

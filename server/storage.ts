@@ -1206,7 +1206,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTimeEntry(id: number, updateData: Partial<InsertTimeEntry>): Promise<TimeEntry | undefined> {
-    // If time-related fields are updated, recalculate
+    // Always check if we need to recalculate hours and values
     if (updateData.startTime || updateData.endTime || updateData.breakStartTime || updateData.breakEndTime || updateData.serviceId) {
       const existing = await this.getTimeEntry(id);
       if (!existing) return undefined;
@@ -1229,10 +1229,13 @@ export class DatabaseStorage implements IStorage {
         totalValue: totalValue.toString()
       };
 
+      console.log(`[STORAGE DEBUG] Updating time entry ${id} with recalculation:`, updatedData);
       const [timeEntry] = await db.update(timeEntries).set(updatedData).where(eq(timeEntries.id, id)).returning();
       return timeEntry || undefined;
     }
 
+    // For other field updates (like projectId), update directly
+    console.log(`[STORAGE DEBUG] Updating time entry ${id} without recalculation:`, updateData);
     const [timeEntry] = await db.update(timeEntries).set(updateData).where(eq(timeEntries.id, id)).returning();
     return timeEntry || undefined;
   }
