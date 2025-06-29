@@ -89,12 +89,26 @@ This is a full-stack time management application built with a modern React front
 ### Environment Setup
 - **PostgreSQL**: Configured via DATABASE_URL environment variable
 - **Modules**: Node.js 20, Web, PostgreSQL 16
-- **Deployment**: Replit autoscale deployment target
+- **Deployment Options**: Replit autoscale deployment or Railway
+
+### Railway Deployment
+- **Platform**: Railway (railway.app)
+- **Build System**: Nixpacks with Node.js 20
+- **Port Configuration**: Dynamic PORT environment variable
+- **Database**: PostgreSQL provisioned automatically
+- **Configuration Files**: 
+  - `railway.json` - Railway-specific settings
+  - `nixpacks.toml` - Build configuration
+  - `Procfile` - Process definition
+  - `.env.example` - Environment variables template
+- **Deploy Process**: Automatic from GitHub repository
+- **Domain**: Auto-generated `.railway.app` domain
 
 ## Changelog
 
 ```
 Changelog:
+- June 29, 2025. Railway deployment configuration - added railway.json, nixpacks.toml, Procfile for Railway deployment, updated server port configuration to use dynamic PORT env variable, created .env.example and comprehensive Railway deployment guide, updated .gitignore for production deployment
 - June 27, 2025. Projects module fully integrated with time entries - project field added to time entry form, projects filtered by client and status (only ANDAMENTO/PLANEJADO shown), project display shows name only without status
 - June 26, 2025. Enhanced Analytics Service Type chart - now displays CODE field from service_types table, includes explanatory legend showing CODE - DESCRIPTION mapping, and displays values inside each bar for better readability
 - June 26, 2025. Fixed service field loading issue in edit mode - corrected timing in handleEdit function to load client services before setting serviceId, ensuring "Serviço" field is properly populated when editing activities from Manutenção page
